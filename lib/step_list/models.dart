@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 class Flow {
+  final int id;
   final String type; // MAIN, ALTERNATE, EXCEPTION
   final List<ReqStep> steps;
 
-  Flow({required this.type, required this.steps});
+  Flow({required this.type, required this.steps, required this.id});
 }
 
 class ReqStep {
@@ -35,7 +36,7 @@ List<Flow> parseFlowsFromJson(String jsonString) {
 
   for (var flowJson in jsonData) {
     List<ReqStep> steps = parseSteps(flowJson['steps']);
-    Flow flow = Flow(type: flowJson['type'], steps: steps);
+    Flow flow = Flow(type: flowJson['type'], steps: steps, id: flowJson['id']);
     flows.add(flow);
   }
 

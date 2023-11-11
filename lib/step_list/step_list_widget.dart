@@ -7,9 +7,11 @@ import 'models.dart' as reqspec_models;
 
 class StepListWidget extends StatelessWidget {
   final List<ReqStep>? steps;
+  final int flowId;
 
   const StepListWidget({
     Key? key,
+    required this.flowId,
     this.steps,
   }) : super(key: key);
 
@@ -21,23 +23,26 @@ class StepListWidget extends StatelessWidget {
   }
 
   Widget buildStepsList(List<ReqStep> steps) {
-    return ListView.builder(
-      itemCount: steps.length,
-      itemBuilder: (context, index) {
-        final step = steps[index];
-        return ListTile(
-          title: Text('${step.number} ${step.text}'),
-          // subtitle:
-          // step.children.isNotEmpty
-          //     ? Padding(
-          //         padding: const EdgeInsets.only(left: 16.0),
-          //         child: StepListWidget(
-          //             steps:
-          //                 step.children), // Recursion with the children steps
-          //       )
-          //     : null,
-        );
-      },
+    return Column(
+      children: steps.map((step) => buildStepCard(step)).toList(),
+    );
+  }
+
+  Widget buildStepCard(ReqStep step) {
+    return Card(
+      elevation: 2, // Adds a subtle shadow
+      margin: const EdgeInsets.all(8.0), // Space around the card
+      child: ListTile(
+        leading: Text(
+          step.number,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ), // Step number
+        title: Text(
+          step.text,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        // You can add onTap, trailing and other properties as needed
+      ),
     );
   }
 
@@ -51,8 +56,8 @@ class StepListWidget extends StatelessWidget {
           //     ? state.flows.first.steps
           //     : (state as FlowsNumberedState).flows.first.steps;
           final steps = getAllSteps(state is FlowsLoadedState
-              ? state.flows.first
-              : (state as FlowsNumberedState).flows.first);
+              ? getFlowById(state.flows, flowId)
+              : getFlowById((state as FlowsNumberedState).flows, flowId));
           return buildStepsList(steps); // Use the new method to build the list
         } else if (state is ErrorReqSpecStepState) {
           return Center(child: Text('Error: ${state.message}'));
@@ -77,5 +82,14 @@ class StepListWidget extends StatelessWidget {
     for (var child in root.children) {
       _getAllSteps(child, stepList);
     }
+  }
+
+  getFlowById(List<reqspec_models.Flow> flows, int flowId) {
+    for (var flow in flows) {
+      if (flow.id == flowId) {
+        return flow;
+      }
+    }
+    throw Exception('The flow id specified dosen\'t exist');
   }
 }

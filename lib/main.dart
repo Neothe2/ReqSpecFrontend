@@ -16,6 +16,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       title: 'Flutter Demo',
       home: MyHomePage(title: 'Flutter Demo Home Page'),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -27,16 +28,30 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Wrapping StepListWidget with BlocProvider to provide StepBloc to the widget tree.
-    return BlocProvider(
+    var text = 'Don\'t click this button';
+    return BlocProvider<StepBloc>(
       create: (context) => StepBloc()
         ..add(LoadFlowsEvent()), // Triggering the event to load flows
       child: Scaffold(
         appBar: AppBar(
           title: Text(title),
         ),
-        body:
-            StepListWidget(), // No need to pass steps here as it will be managed by BlocBuilder inside StepListWidget
+        body: ListView(
+          children: <Widget>[
+            StepListWidget(
+              flowId: 5, // Replace with your first flowId
+            ),
+            TextButton(
+              onPressed: () {
+                text = 'Fuck you';
+              },
+              child: Text(text),
+            ),
+            StepListWidget(
+              flowId: 6, // Replace with your second flowId
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
+import 'package:http/http.dart' as http;
 
 import 'models.dart';
 
@@ -78,7 +79,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
                 "forward_step_associations": [13],
                 "type": "MAIN",
                 "children": [],
-                "text": "some step 2",
+                "text": "some step 2 thsi was updated",
                 "parent": 9,
                 "flow": null
               }
@@ -113,6 +114,24 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
           },
           {
             "id": 14,
+            "forward_step_associations": [],
+            "type": "EXCEPTION",
+            "children": [],
+            "text": "exception flow step 2",
+            "parent": null,
+            "flow": 6
+          },
+          {
+            "id": 15,
+            "forward_step_associations": [],
+            "type": "EXCEPTION",
+            "children": [],
+            "text": "exception flow step 2",
+            "parent": null,
+            "flow": 6
+          },
+          {
+            "id": 16,
             "forward_step_associations": [],
             "type": "EXCEPTION",
             "children": [],
