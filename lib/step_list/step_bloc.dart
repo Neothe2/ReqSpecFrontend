@@ -35,115 +35,19 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
   }
 
   Future<List<Flow>> fetchFlows() async {
-    //TODO Replace with actual data fetching logic
-    var jsonRecieved = [
-      {
-        "id": 5,
-        "type": "MAIN",
-        "steps": [
-          {
-            "id": 8,
-            "forward_step_associations": [],
-            "type": "MAIN",
-            "children": [],
-            "text": "this is a step",
-            "parent": null,
-            "flow": 5
-          },
-          {
-            "id": 9,
-            "forward_step_associations": [],
-            "type": "MAIN",
-            "children": [
-              {
-                "id": 11,
-                "forward_step_associations": [],
-                "type": "MAIN",
-                "children": [
-                  {
-                    "id": 15,
-                    "forward_step_associations": [],
-                    "type": "MAIN",
-                    "children": [],
-                    "text": "child666",
-                    "parent": 11,
-                    "flow": null
-                  }
-                ],
-                "text": "some step",
-                "parent": 9,
-                "flow": null
-              },
-              {
-                "id": 12,
-                "forward_step_associations": [13],
-                "type": "MAIN",
-                "children": [],
-                "text": "some step 2 thsi was updated",
-                "parent": 9,
-                "flow": null
-              }
-            ],
-            "text": "this is a step 2",
-            "parent": null,
-            "flow": 5
-          },
-          {
-            "id": 10,
-            "forward_step_associations": [],
-            "type": "MAIN",
-            "children": [],
-            "text": "this is a step 3",
-            "parent": null,
-            "flow": 5
-          }
-        ]
-      },
-      {
-        "id": 6,
-        "type": "EXCEPTION",
-        "steps": [
-          {
-            "id": 13,
-            "forward_step_associations": [12],
-            "type": "EXCEPTION",
-            "children": [],
-            "text": "exception flow step 1",
-            "parent": null,
-            "flow": 6
-          },
-          {
-            "id": 14,
-            "forward_step_associations": [],
-            "type": "EXCEPTION",
-            "children": [],
-            "text": "exception flow step 2",
-            "parent": null,
-            "flow": 6
-          },
-          {
-            "id": 15,
-            "forward_step_associations": [],
-            "type": "EXCEPTION",
-            "children": [],
-            "text": "exception flow step 2",
-            "parent": null,
-            "flow": 6
-          },
-          {
-            "id": 16,
-            "forward_step_associations": [],
-            "type": "EXCEPTION",
-            "children": [],
-            "text": "exception flow step 2",
-            "parent": null,
-            "flow": 6
-          }
-        ]
-      }
-    ];
+    final uri = Uri.parse('http://10.0.2.2:8000/reqspec/flows/');
+    final response = await http.get(uri);
 
-    return parseFlowsFromJson(jsonEncode(jsonRecieved)); // Dummy data
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      return parseFlowsFromJson(response.body);
+    } else {
+      print(response.body);
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load flows');
+    }
   }
 
   void numberSteps(List<Flow> flows) {
