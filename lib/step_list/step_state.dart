@@ -22,3 +22,10 @@ class ErrorReqSpecStepState extends ReqSpecStepState {
 
   ErrorReqSpecStepState(this.message);
 }
+
+class StepSelectedState extends ReqSpecStepState {
+  final List<Flow> flows;
+  final int selectedStepId;
+
+  StepSelectedState(this.flows, this.selectedStepId);
+}

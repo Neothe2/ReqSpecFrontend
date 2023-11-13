@@ -11,15 +11,32 @@ part 'step_event.dart';
 part 'step_state.dart';
 
 class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
+  List<Flow> flows = [];
+
   StepBloc() : super(InitialReqSpecStepState()) {
     on<LoadFlowsEvent>(_onLoadFlowsEvent);
     on<NumberStepsEvent>(_onNumberStepsEvent);
+    on<SelectStepEvent>(_onStepSelectedEvent);
+  }
+
+  Future<void> _onStepSelectedEvent(
+    SelectStepEvent event,
+    Emitter<ReqSpecStepState> emit,
+  ) async {
+    try {
+      emit(StepSelectedState(flows, event.stepId)); // Emit loaded state
+    } catch (e) {
+      emit(ErrorReqSpecStepState(
+          e.toString())); // Emit error state if something goes wrong
+    }
   }
 
   Future<void> _onLoadFlowsEvent(
-      LoadFlowsEvent event, Emitter<ReqSpecStepState> emit) async {
+    LoadFlowsEvent event,
+    Emitter<ReqSpecStepState> emit,
+  ) async {
     try {
-      List<Flow> flows = await fetchFlows(); // Fetch the flows
+      flows = await fetchFlows(); // Fetch the flows
       emit(FlowsLoadedState(flows)); // Emit loaded state
       add(NumberStepsEvent(flows)); // Dispatch NumberStepsEvent
     } catch (e) {
@@ -29,8 +46,10 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
   }
 
   void _onNumberStepsEvent(
-      NumberStepsEvent event, Emitter<ReqSpecStepState> emit) {
-    numberSteps(event.flows); // Number the steps
+    NumberStepsEvent event,
+    Emitter<ReqSpecStepState> emit,
+  ) {
+    numberSteps(); // Number the steps
     emit(FlowsNumberedState(event.flows)); // Emit numbered state
   }
 
@@ -50,7 +69,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     }
   }
 
-  void numberSteps(List<Flow> flows) {
+  void numberSteps() {
     for (var flow in flows) {
       _numberStepsRecursive(flow.steps);
     }

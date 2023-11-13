@@ -10,3 +10,8 @@ class NumberStepsEvent extends StepEvent {
 
   NumberStepsEvent(this.flows);
 }
+
+class SelectStepEvent extends StepEvent {
+  final int stepId;
+  SelectStepEvent(this.stepId);
+}

@@ -9,6 +9,7 @@ class Flow {
 }
 
 class ReqStep {
+  final int id;
   final String text;
   final String type;
   final int? parent;
@@ -18,6 +19,7 @@ class ReqStep {
   String number; // Will be assigned later
 
   ReqStep({
+    required this.id,
     required this.text,
     required this.type,
     this.parent,
@@ -51,6 +53,7 @@ List<ReqStep> parseSteps(List stepsJson) {
       children = parseSteps(stepJson['children']);
     }
     ReqStep step = ReqStep(
+      id: stepJson['id'],
       text: stepJson['text'],
       type: stepJson['type'],
       parent: stepJson['parent'],

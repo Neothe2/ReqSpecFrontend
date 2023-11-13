@@ -29,29 +29,23 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var text = 'Don\'t click this button';
-    return BlocProvider<StepBloc>(
-      create: (context) => StepBloc()
-        ..add(LoadFlowsEvent()), // Triggering the event to load flows
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(title),
-        ),
-        body: ListView(
-          children: <Widget>[
-            StepListWidget(
-              flowId: 5, // Replace with your first flowId
-            ),
-            TextButton(
-              onPressed: () {
-                text = 'Fuck you';
-              },
-              child: Text(text),
-            ),
-            StepListWidget(
-              flowId: 6, // Replace with your second flowId
-            ),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+      ),
+      body: ListView(
+        children: <Widget>[
+          StepListPage(
+            flowId: 5, // Replace with your first flowId
+          ),
+          TextButton(
+            onPressed: () {},
+            child: Text(text),
+          ),
+          StepListPage(
+            flowId: 6, // Replace with your second flowId
+          ),
+        ],
       ),
     );
   }
