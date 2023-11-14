@@ -110,6 +110,7 @@ class StepListWidget extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Card(
+                  color: Colors.lightBlue,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -119,7 +120,7 @@ class StepListWidget extends StatelessWidget {
                           print('Move ${step.text} up');
                           // Handle move up
                         },
-                        color: Colors.lightBlue,
+                        color: Colors.white,
                       ),
                       IconButton(
                         icon: Icon(Icons.arrow_downward_rounded),
@@ -127,28 +128,28 @@ class StepListWidget extends StatelessWidget {
                           print('Move ${step.text} down');
                           // Handle move down
                         },
-                        color: Colors.lightBlue,
+                        color: Colors.white,
                       ),
                       IconButton(
                         icon: Icon(Icons.keyboard_arrow_right_rounded),
                         onPressed: () {
                           print('Indent ${step.text} to the right');
                         },
-                        color: Colors.lightBlue,
+                        color: Colors.white,
                       ),
                       IconButton(
                         icon: Icon(Icons.keyboard_arrow_left_rounded),
                         onPressed: () {
                           print('Indent ${step.text} to the left');
                         },
-                        color: Colors.lightBlue,
+                        color: Colors.white,
                       ),
                       IconButton(
                         icon: Icon(Icons.delete_forever_rounded),
                         onPressed: () {
                           print('Delete ${step.text}');
                         },
-                        color: Colors.lightBlue,
+                        color: Colors.white,
                       ),
                       !isEditing
                           ? IconButton(
@@ -159,7 +160,7 @@ class StepListWidget extends StatelessWidget {
                                     .add(EditStepEvent(step.id));
                                 // Handle delete
                               },
-                              color: Colors.lightBlue,
+                              color: Colors.white,
                             )
                           : IconButton(
                               onPressed: () {
@@ -168,10 +169,11 @@ class StepListWidget extends StatelessWidget {
                               },
                               icon: Icon(
                                 Icons.check,
-                                color: Colors.lightBlue,
+                                color: Colors.white,
                               )),
                     ],
                   ),
+                  elevation: 0,
                 ),
               ),
             // ... existing submenu icons
