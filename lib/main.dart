@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reqspec/step_list/step_bloc.dart';
 import 'package:reqspec/step_list/step_list_widget.dart';
@@ -28,7 +29,7 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var text = 'Don\'t click this button';
+    var text = 'WHATEVER YOU DO, DO NOT CLICK THIS BUTTON';
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -39,8 +40,15 @@ class MyHomePage extends StatelessWidget {
             flowId: 5, // Replace with your first flowId
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              SystemNavigator.pop();
+              throw Exception('FUCK YOU!');
+            },
             child: Text(text),
+            style: ButtonStyle(
+              backgroundColor: MaterialStatePropertyAll(Colors.yellow),
+              foregroundColor: MaterialStatePropertyAll(Colors.black),
+            ),
           ),
           StepListPage(
             flowId: 6, // Replace with your second flowId
