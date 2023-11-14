@@ -29,3 +29,10 @@ class StepSelectedState extends ReqSpecStepState {
 
   StepSelectedState(this.flows, this.selectedStepId);
 }
+
+// State indicating that a step is currently being edited
+class EditingStepState extends ReqSpecStepState {
+  final List<Flow> flows;
+  final int editingStepId;
+  EditingStepState(this.flows, this.editingStepId);
+}

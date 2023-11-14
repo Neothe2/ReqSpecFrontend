@@ -40,43 +40,142 @@ class StepListWidget extends StatelessWidget {
     return buildStepsFromBloc(context);
   }
 
-  Widget buildStepCard(ReqStep step, bool isSelected, BuildContext context) {
+  Widget buildStepCard(
+    ReqStep step,
+    bool isSelected,
+    BuildContext context,
+    bool isEditing,
+  ) {
+    var editingText = '';
     return GestureDetector(
       onTap: () {
         if (isSelected) {
-          return context.read<StepBloc>().add(SelectStepEvent(-1));
+          context.read<StepBloc>().add(SelectStepEvent(-1)); // Deselect
+        } else {
+          context.read<StepBloc>().add(SelectStepEvent(step.id)); // Select
         }
-        context.read<StepBloc>().add(SelectStepEvent(step.id));
       },
       child: Card(
         color: isSelected ? Colors.lightBlue : null,
-
-        elevation: 2, // Adds a subtle shadow
-        margin: const EdgeInsets.all(8.0), // Space around the card
-        child: ListTile(
-          tileColor: null,
-          leading: Text(
-            step.number,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: isSelected ? Colors.white : Colors.black,
+        elevation: 2,
+        margin: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            ListTile(
+              leading: Text(
+                step.number,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: isSelected ? Colors.white : Colors.black,
+                ),
+              ),
+              title: isEditing && isSelected
+                  ? TextField(
+                      controller: TextEditingController(text: step.text),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      autofocus: true,
+                      onChanged: (String text) {
+                        editingText = text;
+                      },
+                      onSubmitted: (String text) {
+                        context
+                            .read<StepBloc>()
+                            .add(UpdateStepTextEvent(step.id, text));
+                      },
+                    )
+                  : Text(
+                      step.text,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Colors.black,
+                      ),
+                    ),
+              trailing: isSelected
+                  ? Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.white,
+                    )
+                  : null,
             ),
-          ), // Step number
-          title: Text(
-            step.text,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : Colors.black,
-            ),
-          ),
-          trailing: isSelected
-              ? Icon(
-                  Icons.check_circle_outline,
-                  color: Colors.white,
-                )
-              : null,
-          // You can add onTap, trailing and other properties as needed
+            // Submenu appears as a row of icon buttons when the item is selected
+            if (isSelected)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_upward_rounded),
+                        onPressed: () {
+                          print('Move ${step.text} up');
+                          // Handle move up
+                        },
+                        color: Colors.lightBlue,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.arrow_downward_rounded),
+                        onPressed: () {
+                          print('Move ${step.text} down');
+                          // Handle move down
+                        },
+                        color: Colors.lightBlue,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.keyboard_arrow_right_rounded),
+                        onPressed: () {
+                          print('Indent ${step.text} to the right');
+                        },
+                        color: Colors.lightBlue,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.keyboard_arrow_left_rounded),
+                        onPressed: () {
+                          print('Indent ${step.text} to the left');
+                        },
+                        color: Colors.lightBlue,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete_forever_rounded),
+                        onPressed: () {
+                          print('Delete ${step.text}');
+                        },
+                        color: Colors.lightBlue,
+                      ),
+                      !isEditing
+                          ? IconButton(
+                              icon: Icon(Icons.edit),
+                              onPressed: () {
+                                context
+                                    .read<StepBloc>()
+                                    .add(EditStepEvent(step.id));
+                                // Handle delete
+                              },
+                              color: Colors.lightBlue,
+                            )
+                          : IconButton(
+                              onPressed: () {
+                                context.read<StepBloc>().add(
+                                    UpdateStepTextEvent(step.id, editingText));
+                              },
+                              icon: Icon(
+                                Icons.check,
+                                color: Colors.lightBlue,
+                              )),
+                    ],
+                  ),
+                ),
+              ),
+            // ... existing submenu icons
+          ],
         ),
       ),
     );
@@ -89,19 +188,29 @@ class StepListWidget extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         } else if (state is FlowsLoadedState ||
             state is FlowsNumberedState ||
-            state is StepSelectedState) {
+            state is StepSelectedState ||
+            state is EditingStepState) {
           // final steps = state is FlowsLoadedState
           //     ? state.flows.first.steps
           //     : (state as FlowsNumberedState).flows.first.steps;
           final steps =
               getAllSteps(getFlowById((state as dynamic).flows, flowId));
           var selectedStepId = -1;
+          var isEditing = false;
           if (state is StepSelectedState) {
             selectedStepId = (state as dynamic).selectedStepId;
           }
+          if (state is EditingStepState) {
+            selectedStepId = state.editingStepId;
+            isEditing = true;
+          }
 
-          return getStepList(steps, selectedStepId,
-              context); // Use the new method to build the list
+          return getStepList(
+            steps,
+            selectedStepId,
+            context,
+            isEditing,
+          ); // Use the new method to build the list
         } else if (state is ErrorReqSpecStepState) {
           return Center(child: Text('Error: ${state.message}'));
         } else {
@@ -112,15 +221,15 @@ class StepListWidget extends StatelessWidget {
   }
 
   Widget getStepList(
-      List<ReqStep> steps, int selectedStepId, BuildContext context) {
+    List<ReqStep> steps,
+    int selectedStepId,
+    BuildContext context,
+    bool isEditing,
+  ) {
     // Map each step to a widget using the buildStepCard function
     // and then convert it to a list using toList().
     List<Widget> stepWidgets = steps.map<Widget>((step) {
-      return buildStepCard(
-        step,
-        step.id == selectedStepId,
-        context,
-      );
+      return buildStepCard(step, step.id == selectedStepId, context, isEditing);
     }).toList();
 
     return Column(

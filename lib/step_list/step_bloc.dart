@@ -17,6 +17,49 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     on<LoadFlowsEvent>(_onLoadFlowsEvent);
     on<NumberStepsEvent>(_onNumberStepsEvent);
     on<SelectStepEvent>(_onStepSelectedEvent);
+    on<EditStepEvent>(_onEditStepEvent);
+    on<UpdateStepTextEvent>(_onUpdateStepTextEvent);
+  }
+
+  // Handler for when a step is selected for editing
+  void _onEditStepEvent(
+    EditStepEvent event,
+    Emitter<ReqSpecStepState> emit,
+  ) {
+    // You may need to fetch the current state of the flows here, if necessary.
+    // For now, let's assume you can access them directly.
+    emit(EditingStepState(flows, event.stepId));
+  }
+
+  // Handler for when the edited step text is submitted
+  void _onUpdateStepTextEvent(
+    UpdateStepTextEvent event,
+    Emitter<ReqSpecStepState> emit,
+  ) async {
+    try {
+      // Here you would implement the logic to update the step's text.
+      // For now, let's assume there's a method that does this.
+      await _updateStepText(event.stepId, event.newText);
+
+      // After updating, you would typically want to refresh the list of flows.
+      // Let's emit the FlowsLoadedState with the updated flows.
+      emit(StepSelectedState(flows, event.stepId));
+    } catch (error) {
+      // If something goes wrong, emit an error state.
+      emit(ErrorReqSpecStepState(error.toString()));
+    }
+  }
+
+  // Placeholder method for updating the text of a step
+  Future<void> _updateStepText(int stepId, String newText) async {
+    // Find the step by ID and update its text.
+    // This is where you'd put your logic for updating the step text.
+    // For demonstration, let's just print the new text.
+    http.patch(Uri.parse('http://10.0.2.2:8000/reqspec/steps/$stepId/'),
+        body: {"text": newText});
+    flows = await fetchFlows();
+    numberSteps();
+    print('Updated step $stepId with text: $newText');
   }
 
   Future<void> _onStepSelectedEvent(
