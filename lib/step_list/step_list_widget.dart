@@ -88,7 +88,7 @@ class StepListWidget extends StatelessWidget {
                       onSubmitted: (String text) {
                         context
                             .read<StepBloc>()
-                            .add(UpdateStepTextEvent(step.id, text));
+                            .add(UpdateStepTextEvent(step, text));
                       },
                     )
                   : Text(
@@ -111,12 +111,14 @@ class StepListWidget extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Card(
                   color: Colors.lightBlue,
+                  elevation: 0,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       IconButton(
                         icon: Icon(Icons.arrow_upward_rounded),
                         onPressed: () {
+                          context.read<StepBloc>().add(MoveStepUpEvent(step));
                           print('Move ${step.text} up');
                           // Handle move up
                         },
@@ -125,6 +127,7 @@ class StepListWidget extends StatelessWidget {
                       IconButton(
                         icon: Icon(Icons.arrow_downward_rounded),
                         onPressed: () {
+                          context.read<StepBloc>().add(MoveStepDownEvent(step));
                           print('Move ${step.text} down');
                           // Handle move down
                         },
@@ -133,6 +136,9 @@ class StepListWidget extends StatelessWidget {
                       IconButton(
                         icon: Icon(Icons.keyboard_arrow_right_rounded),
                         onPressed: () {
+                          context
+                              .read<StepBloc>()
+                              .add(IndentStepForwardEvent(step));
                           print('Indent ${step.text} to the right');
                         },
                         color: Colors.white,
@@ -165,7 +171,7 @@ class StepListWidget extends StatelessWidget {
                           : IconButton(
                               onPressed: () {
                                 context.read<StepBloc>().add(
-                                    UpdateStepTextEvent(step.id, editingText));
+                                    UpdateStepTextEvent(step, editingText));
                               },
                               icon: Icon(
                                 Icons.check,
@@ -173,7 +179,6 @@ class StepListWidget extends StatelessWidget {
                               )),
                     ],
                   ),
-                  elevation: 0,
                 ),
               ),
             // ... existing submenu icons

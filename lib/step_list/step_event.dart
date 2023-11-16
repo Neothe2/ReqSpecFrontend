@@ -24,7 +24,22 @@ class EditStepEvent extends StepEvent {
 
 // Event triggered when the user submits their changes to a step's text
 class UpdateStepTextEvent extends StepEvent {
-  final int stepId;
+  final ReqStep step;
   final String newText;
-  UpdateStepTextEvent(this.stepId, this.newText);
+  UpdateStepTextEvent(this.step, this.newText);
+}
+
+class MoveStepUpEvent extends StepEvent {
+  final ReqStep step;
+  MoveStepUpEvent(this.step);
+}
+
+class MoveStepDownEvent extends StepEvent {
+  final ReqStep step;
+  MoveStepDownEvent(this.step);
+}
+
+class IndentStepForwardEvent extends StepEvent {
+  final ReqStep step;
+  IndentStepForwardEvent(this.step);
 }

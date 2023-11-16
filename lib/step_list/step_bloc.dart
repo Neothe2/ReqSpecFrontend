@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
@@ -19,6 +20,100 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     on<SelectStepEvent>(_onStepSelectedEvent);
     on<EditStepEvent>(_onEditStepEvent);
     on<UpdateStepTextEvent>(_onUpdateStepTextEvent);
+    on<MoveStepUpEvent>(_onMoveStepUpEvent);
+    on<MoveStepDownEvent>(_onMoveStepDownEvent);
+    on<IndentStepForwardEvent>(_onIndentStepForwardEvent);
+  }
+
+  FutureOr<void> _onIndentStepForwardEvent(
+      IndentStepForwardEvent event, Emitter<ReqSpecStepState> emit) async {
+    if (event.step.order > 1) {
+      var parent;
+      if (event.step.parent == null) {
+        parent = event.step.flow;
+      } else {
+        parent = event.step.parent;
+      }
+      ReqStep newParent = parent.getStepByOrder(event.step.order - 1);
+      var response = await http.patch(
+          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'),
+          body: {"parent": newParent.id, "flow": null});
+      //TODO fix the patch login
+
+      print(response.body);
+      print(response.statusCode);
+
+      //TODO add error handling
+
+      //                                  |||
+      //TODO refresh the data before this VVV
+      HashMap<int, int> orderMap = HashMap();
+      for (var i = 1; i <= newParent.children.length; i++) {
+        if (!(newParent.children[i - 1].order == i)) {
+          orderMap[newParent.children[i - 1].id] = i;
+        }
+      }
+      for (var i = 1; i <= parent.getChildren().length; i++) {
+        if (!(parent.getChildren()[i - 1].order == i)) {
+          orderMap[parent.getChildren()[i - 1].id] = i;
+        }
+      }
+
+      var a = {"parent": newParent.id, "flow": (null).toString()};
+      print(a);
+
+      http.post(Uri.parse('http://10.0.2.2:8000/reqspec/steps/set_order/'),
+          body: {orderMap});
+    }
+  }
+
+  FutureOr<void> _onMoveStepUpEvent(
+      MoveStepUpEvent event, Emitter<ReqSpecStepState> emit) async {
+    if (event.step.order > 1) {
+      var parent;
+      if (event.step.parent == null) {
+        parent = event.step.flow;
+      } else {
+        parent = event.step.parent;
+      }
+      ReqStep stepToSwap = parent.getStepByOrder(event.step.order - 1);
+      await http.patch(
+          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${stepToSwap.id}/'),
+          body: {'order': (event.step.order).toString()});
+      await http.patch(
+          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'),
+          body: {'order': (event.step.order - 1).toString()});
+      stepToSwap.order = event.step.order;
+      event.step.order = event.step.order - 1;
+
+      parent.sortSteps();
+      numberSteps();
+      emit(StepSelectedState(flows, event.step.id));
+    }
+  }
+
+  FutureOr<void> _onMoveStepDownEvent(
+      MoveStepDownEvent event, Emitter<ReqSpecStepState> emit) async {
+    var parent;
+    if (event.step.parent == null) {
+      parent = event.step.flow;
+    } else {
+      parent = event.step.parent;
+    }
+    if (event.step.order < parent.getChildrenLength()) {
+      ReqStep stepToSwap = parent.getStepByOrder(event.step.order + 1);
+      await http.patch(
+          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${stepToSwap.id}/'),
+          body: {'order': (event.step.order).toString()});
+      await http.patch(
+          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'),
+          body: {'order': (event.step.order + 1).toString()});
+      stepToSwap.order = event.step.order;
+      event.step.order = event.step.order + 1;
+      parent.sortSteps();
+      numberSteps();
+      emit(StepSelectedState(flows, event.step.id));
+    }
   }
 
   // Handler for when a step is selected for editing
@@ -39,11 +134,11 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     try {
       // Here you would implement the logic to update the step's text.
       // For now, let's assume there's a method that does this.
-      await _updateStepText(event.stepId, event.newText);
+      await _updateStepText(event.step, event.newText);
 
       // After updating, you would typically want to refresh the list of flows.
       // Let's emit the FlowsLoadedState with the updated flows.
-      emit(StepSelectedState(flows, event.stepId));
+      emit(StepSelectedState(flows, event.step.id));
     } catch (error) {
       // If something goes wrong, emit an error state.
       emit(ErrorReqSpecStepState(error.toString()));
@@ -51,15 +146,15 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
   }
 
   // Placeholder method for updating the text of a step
-  Future<void> _updateStepText(int stepId, String newText) async {
+  Future<void> _updateStepText(ReqStep step, String newText) async {
     // Find the step by ID and update its text.
     // This is where you'd put your logic for updating the step text.
     // For demonstration, let's just print the new text.
-    http.patch(Uri.parse('http://10.0.2.2:8000/reqspec/steps/$stepId/'),
+    http.patch(Uri.parse('http://10.0.2.2:8000/reqspec/steps/${step.id}/'),
         body: {"text": newText});
-    flows = await fetchFlows();
-    numberSteps();
-    print('Updated step $stepId with text: $newText');
+    step.text = newText;
+    // flows = await fetchFlows();
+    // numberSteps();
   }
 
   Future<void> _onStepSelectedEvent(
