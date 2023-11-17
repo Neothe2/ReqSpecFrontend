@@ -35,35 +35,50 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
         parent = event.step.parent;
       }
       ReqStep newParent = parent.getStepByOrder(event.step.order - 1);
+      var requestBody = {
+        "parent": newParent.id, // Assuming newParent.id is not null
+        "flow": null, // Sending null as required
+        "id": event.step.id,
+        "type": event.step.type
+      };
+
       var response = await http.patch(
           Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'),
-          body: {"parent": newParent.id, "flow": null});
-      //TODO fix the patch login
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode(requestBody)); // Encoding the request body as JSON
 
       print(response.body);
       print(response.statusCode);
 
-      //TODO add error handling
+      newParent.addAsChild(event.step);
 
-      //                                  |||
-      //TODO refresh the data before this VVV
-      HashMap<int, int> orderMap = HashMap();
+      var orderMap = {};
       for (var i = 1; i <= newParent.children.length; i++) {
         if (!(newParent.children[i - 1].order == i)) {
-          orderMap[newParent.children[i - 1].id] = i;
+          newParent.children[i - 1].order = i;
+          orderMap[(newParent.children[i - 1].id).toString()] = i;
         }
       }
       for (var i = 1; i <= parent.getChildren().length; i++) {
         if (!(parent.getChildren()[i - 1].order == i)) {
-          orderMap[parent.getChildren()[i - 1].id] = i;
+          parent.getChildren()[i - 1].order = i;
+          orderMap[(parent.getChildren()[i - 1].id).toString()] = i;
         }
       }
 
       var a = {"parent": newParent.id, "flow": (null).toString()};
       print(a);
 
+      print(orderMap);
+
       http.post(Uri.parse('http://10.0.2.2:8000/reqspec/steps/set_order/'),
-          body: {orderMap});
+          body: jsonEncode(orderMap));
+
+      parent.sortSteps();
+      newParent.sortSteps();
+      numberSteps();
+
+      emit(StepSelectedState(flows, event.step.id));
     }
   }
 

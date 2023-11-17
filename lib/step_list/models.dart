@@ -27,6 +27,10 @@ class Flow {
   getChildren() {
     return steps;
   }
+
+  removeChild(ReqStep step) {
+    this.steps.remove(step);
+  }
 }
 
 class ReqStep {
@@ -71,6 +75,24 @@ class ReqStep {
 
   getChildren() {
     return children;
+  }
+
+  addAsChild(ReqStep step) {
+    var parent;
+    if (step.parent == null) {
+      parent = step.flow;
+    } else {
+      parent = step.parent;
+    }
+
+    step.parent = this;
+    parent.removeChild(step);
+    this.children.add(step);
+    step.flow = null;
+  }
+
+  removeChild(ReqStep step) {
+    this.children.remove(step);
   }
 }
 
