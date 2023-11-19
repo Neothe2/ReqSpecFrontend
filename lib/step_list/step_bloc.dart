@@ -23,6 +23,129 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     on<MoveStepUpEvent>(_onMoveStepUpEvent);
     on<MoveStepDownEvent>(_onMoveStepDownEvent);
     on<IndentStepForwardEvent>(_onIndentStepForwardEvent);
+    on<IndentBackwardEvent>(_onIndentBackwardEvent);
+    on<DeleteStepEvent>(_onDeleteStepEvent);
+  }
+
+  FutureOr<void> _onDeleteStepEvent(
+    DeleteStepEvent event,
+    Emitter<ReqSpecStepState> emit,
+  ) async {
+    var parent;
+    if (event.step.parent == null) {
+      parent = event.step.flow;
+    } else {
+      parent = event.step.parent;
+    }
+    var response = await http.delete(
+        Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'));
+
+    print(response.body);
+    print(response.statusCode);
+    parent.removeChild(event.step);
+    var orderMap = {};
+
+    for (var i = 1; i <= parent.getChildren().length; i++) {
+      if (!(parent.getChildren()[i - 1].order == i)) {
+        parent.getChildren()[i - 1].order = i;
+        orderMap[(parent.getChildren()[i - 1].id).toString()] = i;
+      }
+    }
+
+    print(orderMap);
+
+    http.post(
+      Uri.parse('http://10.0.2.2:8000/reqspec/steps/set_order/'),
+      body: jsonEncode(orderMap),
+    );
+    parent.sortChildren();
+    numberSteps();
+
+    emit(FlowsNumberedState(flows));
+  }
+
+  FutureOr<void> _onIndentBackwardEvent(
+    IndentBackwardEvent event,
+    Emitter<ReqSpecStepState> emit,
+  ) async {
+    if (event.step.parent != null) {
+      var parent = event.step.parent;
+      var newParent;
+      bool newParentIsFlow = false;
+      if (event.step.parent!.parent == null) {
+        newParent = event.step.parent!.flow;
+        newParentIsFlow = true;
+      } else {
+        newParent = event.step.parent!.parent;
+      }
+      var requestBody = {};
+      if (!newParentIsFlow) {
+        requestBody = {
+          "parent": newParent.id, // Assuming newParent.id is not null
+          "flow": null, // Sending null as required
+          "id": event.step.id,
+          "type": event.step.type
+        };
+      } else {
+        requestBody = {
+          "parent": null, // Sending null as required
+          "flow": newParent.id, // Assuming newParent.id is not null
+          "id": event.step.id,
+          "type": event.step.type
+        };
+      }
+
+      var response = await http.patch(
+          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode(requestBody)); // Encoding the request body as JSON
+
+      print(response.body);
+      print(response.statusCode);
+
+      var orderMap = {};
+
+      bool targetStepReached = false;
+      orderMap[event.step.id.toString()] = parent!.order + 1;
+      event.step.order = parent.order + 1;
+
+      for (ReqStep step in newParent.getChildren()) {
+        if (targetStepReached) {
+          orderMap[step.id.toString()] = step.order + 1;
+          step.order = step.order + 1;
+        } else {
+          if (step == parent) {
+            targetStepReached = true;
+          }
+        }
+      }
+      newParent.addAsChild(event.step);
+      // for (var i = 1; i <= newParent.getChildren().length; i++) {
+      //   if (!(newParent.getChildren()[i - 1].order == i)) {
+      //     newParent.getChildren()[i - 1].order = i;
+      //     orderMap[(newParent.getChildren()[i - 1].id).toString()] = i;
+      //   }
+      // }
+      for (var i = 1; i <= parent.getChildren().length; i++) {
+        if (!(parent.getChildren()[i - 1].order == i)) {
+          parent.getChildren()[i - 1].order = i;
+          orderMap[(parent.getChildren()[i - 1].id).toString()] = i;
+        }
+      }
+
+      print(orderMap);
+
+      http.post(
+        Uri.parse('http://10.0.2.2:8000/reqspec/steps/set_order/'),
+        body: jsonEncode(orderMap),
+      );
+
+      parent.sortSteps();
+      newParent.sortSteps();
+      numberSteps();
+
+      emit(StepSelectedState(flows, event.step.id));
+    }
   }
 
   FutureOr<void> _onIndentStepForwardEvent(

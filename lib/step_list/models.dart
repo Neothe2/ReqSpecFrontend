@@ -29,7 +29,21 @@ class Flow {
   }
 
   removeChild(ReqStep step) {
-    this.steps.remove(step);
+    steps.remove(step);
+  }
+
+  addAsChild(ReqStep step) {
+    var parent;
+    if (step.parent == null) {
+      parent = step.flow;
+    } else {
+      parent = step.parent;
+    }
+
+    step.flow = this;
+    parent.removeChild(step);
+    steps.add(step);
+    step.parent = null;
   }
 }
 
@@ -87,12 +101,12 @@ class ReqStep {
 
     step.parent = this;
     parent.removeChild(step);
-    this.children.add(step);
+    children.add(step);
     step.flow = null;
   }
 
   removeChild(ReqStep step) {
-    this.children.remove(step);
+    children.remove(step);
   }
 }
 

@@ -43,3 +43,13 @@ class IndentStepForwardEvent extends StepEvent {
   final ReqStep step;
   IndentStepForwardEvent(this.step);
 }
+
+class IndentBackwardEvent extends StepEvent {
+  final ReqStep step;
+  IndentBackwardEvent(this.step);
+}
+
+class DeleteStepEvent extends StepEvent {
+  final ReqStep step;
+  DeleteStepEvent(this.step);
+}

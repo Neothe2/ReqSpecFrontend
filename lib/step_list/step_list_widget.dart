@@ -146,6 +146,9 @@ class StepListWidget extends StatelessWidget {
                       IconButton(
                         icon: Icon(Icons.keyboard_arrow_left_rounded),
                         onPressed: () {
+                          context
+                              .read<StepBloc>()
+                              .add(IndentBackwardEvent(step));
                           print('Indent ${step.text} to the left');
                         },
                         color: Colors.white,
@@ -153,6 +156,7 @@ class StepListWidget extends StatelessWidget {
                       IconButton(
                         icon: Icon(Icons.delete_forever_rounded),
                         onPressed: () {
+                          context.read<StepBloc>().add(DeleteStepEvent(step));
                           print('Delete ${step.text}');
                         },
                         color: Colors.white,
