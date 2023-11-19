@@ -54,8 +54,6 @@ class DeleteStepEvent extends StepEvent {
   DeleteStepEvent(this.step);
 }
 
-class AddClickedEvent extends StepEvent {}
-
 class AddStepEvent extends StepEvent {
   final String type;
   final String text;
