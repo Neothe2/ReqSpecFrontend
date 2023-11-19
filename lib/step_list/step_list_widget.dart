@@ -204,8 +204,9 @@ class StepListWidget extends StatelessWidget {
           // final steps = state is FlowsLoadedState
           //     ? state.flows.first.steps
           //     : (state as FlowsNumberedState).flows.first.steps;
-          final steps =
-              getAllSteps(getFlowById((state as dynamic).flows, flowId));
+          reqspec_models.Flow flow =
+              getFlowById((state as dynamic).flows, flowId);
+          final steps = getAllSteps(flow);
           var selectedStepId = -1;
           var isEditing = false;
           if (state is StepSelectedState) {
@@ -216,12 +217,62 @@ class StepListWidget extends StatelessWidget {
             isEditing = true;
           }
 
-          return getStepList(
-            steps,
-            selectedStepId,
-            context,
-            isEditing,
-          ); // Use the new method to build the list
+          var flowType = convertWord(flow.type);
+
+          return Card(
+            margin: EdgeInsets.all(10.0),
+            elevation: 4.0, // Increased elevation
+            borderOnForeground: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+              side: BorderSide(
+                  color: Colors.blueGrey[100]!, width: 1.0), // Border
+            ),
+            color: Colors.blueGrey[50], // Light background color
+            child: Padding(
+              padding: EdgeInsets.all(8.0), // Inner padding
+              child: Stack(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ListTile(
+                        title: Text(
+                          flowType,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold, // Bold title
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                      ...getStepList(
+                        steps,
+                        selectedStepId,
+                        context,
+                        isEditing,
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: IconButton(
+                      icon: Icon(Icons.add,
+                          color: Colors.blue), // Styled add button
+                      onPressed: () async {
+                        String? newText = await addStepModal(context);
+                        if (newText != null) {
+                          context
+                              .read<StepBloc>()
+                              .add(AddStepEvent(flow.type, newText, flow));
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         } else if (state is ErrorReqSpecStepState) {
           return Center(child: Text('Error: ${state.message}'));
         } else {
@@ -231,7 +282,20 @@ class StepListWidget extends StatelessWidget {
     );
   }
 
-  Widget getStepList(
+  String convertWord(String word) {
+    if (word.isEmpty) {
+      return word;
+    }
+    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+  }
+
+  void main() {
+    String word = "THIS";
+    String convertedWord = convertWord(word);
+    print(convertedWord); // This
+  }
+
+  List<Widget> getStepList(
     List<ReqStep> steps,
     int selectedStepId,
     BuildContext context,
@@ -243,9 +307,7 @@ class StepListWidget extends StatelessWidget {
       return buildStepCard(step, step.id == selectedStepId, context, isEditing);
     }).toList();
 
-    return Column(
-      children: stepWidgets, // Use the list of widgets here
-    );
+    return stepWidgets; // Use the list of widgets here
   }
 
   getAllSteps(reqspec_models.Flow flow) {
@@ -271,5 +333,39 @@ class StepListWidget extends StatelessWidget {
       }
     }
     throw Exception('The flow id specified dosen\'t exist');
+  }
+
+  Future<String?> addStepModal(BuildContext context) async {
+    TextEditingController textController = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Step'),
+          content: TextField(
+            controller: textController,
+            decoration: InputDecoration(hintText: "Enter step text here"),
+            onSubmitted: (String text) {
+              Navigator.of(context).pop(text);
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(null); // Dismiss and return null
+              },
+            ),
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () {
+                Navigator.of(context).pop(textController.text); // Return text
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

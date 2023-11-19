@@ -53,3 +53,13 @@ class DeleteStepEvent extends StepEvent {
   final ReqStep step;
   DeleteStepEvent(this.step);
 }
+
+class AddClickedEvent extends StepEvent {}
+
+class AddStepEvent extends StepEvent {
+  final String type;
+  final String text;
+  final Flow flow;
+
+  AddStepEvent(this.type, this.text, this.flow);
+}

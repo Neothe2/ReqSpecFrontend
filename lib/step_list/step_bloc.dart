@@ -25,6 +25,41 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     on<IndentStepForwardEvent>(_onIndentStepForwardEvent);
     on<IndentBackwardEvent>(_onIndentBackwardEvent);
     on<DeleteStepEvent>(_onDeleteStepEvent);
+    on<AddStepEvent>(_onAddStepEvent);
+  }
+
+  FutureOr<void> _onAddStepEvent(
+    AddStepEvent event,
+    Emitter<ReqSpecStepState> emit,
+  ) async {
+    print('The type of the step is "${event.type}"');
+    print('The text of the step is "${event.text}"');
+    print('The step comes under a "${event.flow.type}" flow');
+    var order = event.flow.steps.length + 1;
+
+    var response = await http.post(
+      Uri.parse(
+        'http://10.0.2.2:8000/reqspec/flows/${event.flow.id}/create_step/',
+      ),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"value": event.text, "order": order}),
+    );
+
+    var serializedResponse = jsonDecode(response.body);
+    print(serializedResponse);
+    event.flow.steps.add(
+      ReqStep(
+          id: serializedResponse['id'],
+          text: serializedResponse['text'],
+          type: serializedResponse['type'],
+          forwardStepAssociations: [],
+          children: [],
+          order: order,
+          flow: event.flow),
+    );
+    event.flow.sortSteps();
+    numberSteps();
+    emit(FlowsNumberedState(flows));
   }
 
   FutureOr<void> _onDeleteStepEvent(
@@ -58,7 +93,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
       Uri.parse('http://10.0.2.2:8000/reqspec/steps/set_order/'),
       body: jsonEncode(orderMap),
     );
-    parent.sortChildren();
+    parent.sortSteps();
     numberSteps();
 
     emit(FlowsNumberedState(flows));
