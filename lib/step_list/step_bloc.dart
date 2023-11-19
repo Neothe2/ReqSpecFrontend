@@ -13,6 +13,7 @@ part 'step_state.dart';
 
 class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
   List<Flow> flows = [];
+  var url = 'http://192.168.0.4:8000';
 
   StepBloc() : super(InitialReqSpecStepState()) {
     on<LoadFlowsEvent>(_onLoadFlowsEvent);
@@ -39,7 +40,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
 
     var response = await http.post(
       Uri.parse(
-        'http://10.0.2.2:8000/reqspec/flows/${event.flow.id}/create_step/',
+        '${url}/reqspec/flows/${event.flow.id}/create_step/',
       ),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"value": event.text, "order": order}),
@@ -72,8 +73,8 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     } else {
       parent = event.step.parent;
     }
-    var response = await http.delete(
-        Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'));
+    var response =
+        await http.delete(Uri.parse('${url}/reqspec/steps/${event.step.id}/'));
 
     print(response.body);
     print(response.statusCode);
@@ -90,7 +91,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     print(orderMap);
 
     http.post(
-      Uri.parse('http://10.0.2.2:8000/reqspec/steps/set_order/'),
+      Uri.parse('${url}/reqspec/steps/set_order/'),
       body: jsonEncode(orderMap),
     );
     parent.sortSteps();
@@ -131,7 +132,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
       }
 
       var response = await http.patch(
-          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'),
+          Uri.parse('${url}/reqspec/steps/${event.step.id}/'),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode(requestBody)); // Encoding the request body as JSON
 
@@ -171,7 +172,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
       print(orderMap);
 
       http.post(
-        Uri.parse('http://10.0.2.2:8000/reqspec/steps/set_order/'),
+        Uri.parse('${url}/reqspec/steps/set_order/'),
         body: jsonEncode(orderMap),
       );
 
@@ -201,7 +202,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
       };
 
       var response = await http.patch(
-          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'),
+          Uri.parse('${url}/reqspec/steps/${event.step.id}/'),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode(requestBody)); // Encoding the request body as JSON
 
@@ -229,7 +230,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
 
       print(orderMap);
 
-      http.post(Uri.parse('http://10.0.2.2:8000/reqspec/steps/set_order/'),
+      http.post(Uri.parse('${url}/reqspec/steps/set_order/'),
           body: jsonEncode(orderMap));
 
       parent.sortSteps();
@@ -250,11 +251,9 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
         parent = event.step.parent;
       }
       ReqStep stepToSwap = parent.getStepByOrder(event.step.order - 1);
-      await http.patch(
-          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${stepToSwap.id}/'),
+      await http.patch(Uri.parse('${url}/reqspec/steps/${stepToSwap.id}/'),
           body: {'order': (event.step.order).toString()});
-      await http.patch(
-          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'),
+      await http.patch(Uri.parse('${url}/reqspec/steps/${event.step.id}/'),
           body: {'order': (event.step.order - 1).toString()});
       stepToSwap.order = event.step.order;
       event.step.order = event.step.order - 1;
@@ -275,11 +274,9 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     }
     if (event.step.order < parent.getChildrenLength()) {
       ReqStep stepToSwap = parent.getStepByOrder(event.step.order + 1);
-      await http.patch(
-          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${stepToSwap.id}/'),
+      await http.patch(Uri.parse('${url}/reqspec/steps/${stepToSwap.id}/'),
           body: {'order': (event.step.order).toString()});
-      await http.patch(
-          Uri.parse('http://10.0.2.2:8000/reqspec/steps/${event.step.id}/'),
+      await http.patch(Uri.parse('${url}/reqspec/steps/${event.step.id}/'),
           body: {'order': (event.step.order + 1).toString()});
       stepToSwap.order = event.step.order;
       event.step.order = event.step.order + 1;
@@ -323,7 +320,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
     // Find the step by ID and update its text.
     // This is where you'd put your logic for updating the step text.
     // For demonstration, let's just print the new text.
-    http.patch(Uri.parse('http://10.0.2.2:8000/reqspec/steps/${step.id}/'),
+    http.patch(Uri.parse('${url}/reqspec/steps/${step.id}/'),
         body: {"text": newText});
     step.text = newText;
     // flows = await fetchFlows();
@@ -365,7 +362,7 @@ class StepBloc extends Bloc<StepEvent, ReqSpecStepState> {
   }
 
   Future<List<Flow>> fetchFlows() async {
-    final uri = Uri.parse('http://10.0.2.2:8000/reqspec/flows/');
+    final uri = Uri.parse('${url}/reqspec/flows/');
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
