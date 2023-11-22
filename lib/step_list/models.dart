@@ -152,3 +152,154 @@ List<ReqStep> parseSteps(List stepsJson, ReqStep? parent, Flow flow) {
   steps.sort((a, b) => a.order.compareTo(b.order));
   return steps;
 }
+
+class Tree {
+  int id;
+  String type; // MAIN, ALTERNATE, EXCEPTION
+  List<Node> children;
+
+  Tree({required this.type, required this.children, required this.id});
+
+  getNodeByOrder(int order) {
+    for (var node in children) {
+      if (node.order == order) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  sortNodes() {
+    children.sort((a, b) => a.order.compareTo(b.order));
+  }
+
+  getChildrenLength() {
+    return children.length;
+  }
+
+  getChildren() {
+    return children;
+  }
+
+  removeChild(Node node) {
+    children.remove(node);
+  }
+
+  addAsChild(Node node) {
+    var parent;
+    if (node.parent == null) {
+      parent = node.tree;
+    } else {
+      parent = node.parent;
+    }
+
+    node.tree = this;
+    parent.removeChild(node);
+    children.add(node);
+    node.parent = null;
+  }
+}
+
+class Node {
+  int id;
+  String text;
+  String type;
+  Node? parent;
+  List<int> forwardNodeAssociations;
+  List<Node> children;
+  Tree? tree; // Changed to Flow?
+  String number;
+  int order;
+
+  Node({
+    required this.id,
+    required this.text,
+    required this.type,
+    this.parent,
+    required this.forwardNodeAssociations,
+    required this.children,
+    this.tree, // Changed to Flow?
+    this.number = '',
+    required this.order,
+  });
+
+  getNodeByOrder(int order) {
+    for (var node in children) {
+      if (node.order == order) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  sortNodes() {
+    children.sort((a, b) => a.order.compareTo(b.order));
+  }
+
+  getChildrenLength() {
+    return children.length;
+  }
+
+  getChildren() {
+    return children;
+  }
+
+  addAsChild(Node node) {
+    var parent;
+    if (node.parent == null) {
+      parent = node.tree;
+    } else {
+      parent = node.parent;
+    }
+
+    node.parent = this;
+    parent.removeChild(node);
+    children.add(node);
+    node.tree = null;
+  }
+
+  removeChild(Node node) {
+    children.remove(node);
+  }
+}
+
+List<Tree> parseTreesFromJson(String jsonString) {
+  final jsonData = json.decode(jsonString);
+  List<Tree> trees = [];
+
+  for (var treeJson in jsonData) {
+    Tree tree = Tree(type: treeJson['type'], children: [], id: treeJson['id']);
+    tree.children =
+        parseNodes(treeJson['children'], null, tree); // Pass the tree object
+    trees.add(tree);
+  }
+
+  return trees;
+}
+
+List<Node> parseNodes(List nodesJson, Node? parent, Tree tree) {
+  List<Node> nodes = [];
+  for (var nodeJson in nodesJson) {
+    Node node = Node(
+      id: nodeJson['id'],
+      text: nodeJson['text'],
+      type: nodeJson['type'],
+      parent: parent,
+      forwardNodeAssociations:
+          List<int>.from(nodeJson['forward_node_associations']),
+      children: [],
+      tree: tree, // Assign the flow object
+      order: nodeJson['order'],
+    );
+
+    if (nodeJson['children'] != null && nodeJson['children'].isNotEmpty) {
+      node.children =
+          parseNodes(nodeJson['children'], node, tree); // Pass the flow object
+    }
+
+    nodes.add(node);
+  }
+
+  nodes.sort((a, b) => a.order.compareTo(b.order));
+  return nodes;
+}
