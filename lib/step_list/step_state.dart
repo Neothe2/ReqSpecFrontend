@@ -1,38 +1,37 @@
 part of 'step_bloc.dart';
 
 @immutable
-abstract class ReqSpecStepState {}
+abstract class NodeState {}
 
-class InitialReqSpecStepState extends ReqSpecStepState {}
+class InitialNodeState extends NodeState {}
 
-class FlowsLoadedState extends ReqSpecStepState {
-  final List<Flow> flows;
+class TreesLoadedState extends NodeState {
+  final List<Tree> trees;
 
-  FlowsLoadedState(this.flows);
+  TreesLoadedState(this.trees);
 }
 
-class FlowsNumberedState extends ReqSpecStepState {
-  final List<Flow> flows;
+class TreesNumberedState extends NodeState {
+  final List<Tree> trees;
 
-  FlowsNumberedState(this.flows);
+  TreesNumberedState(this.trees);
 }
 
-class ErrorReqSpecStepState extends ReqSpecStepState {
+class ErrorState extends NodeState {
   final String message;
 
-  ErrorReqSpecStepState(this.message);
+  ErrorState(this.message);
 }
 
-class StepSelectedState extends ReqSpecStepState {
-  final List<Flow> flows;
-  final int selectedStepId;
+class NodeSelectedState extends NodeState {
+  final List<Tree> trees;
+  final int selectedNodeId;
 
-  StepSelectedState(this.flows, this.selectedStepId);
+  NodeSelectedState(this.trees, this.selectedNodeId);
 }
 
-// State indicating that a step is currently being edited
-class EditingStepState extends ReqSpecStepState {
-  final List<Flow> flows;
-  final int editingStepId;
-  EditingStepState(this.flows, this.editingStepId);
+class EditingNodeState extends NodeState {
+  final List<Tree> trees;
+  final int editingNodeId;
+  EditingNodeState(this.trees, this.editingNodeId);
 }

@@ -1,63 +1,63 @@
 part of 'step_bloc.dart';
 
 @immutable
-abstract class StepEvent {}
+abstract class TreeEvent {}
 
-class LoadFlowsEvent extends StepEvent {}
+class LoadTreesEvent extends TreeEvent {}
 
-class NumberStepsEvent extends StepEvent {
-  final List<Flow> flows;
+class NumberNodesEvent extends TreeEvent {
+  final List<Tree> trees;
 
-  NumberStepsEvent(this.flows);
+  NumberNodesEvent(this.trees);
 }
 
-class SelectStepEvent extends StepEvent {
-  final int stepId;
-  SelectStepEvent(this.stepId);
+class SelectNodeEvent extends TreeEvent {
+  final int nodeId;
+  SelectNodeEvent(this.nodeId);
 }
 
-// Event triggered when the user wants to edit a step
-class EditStepEvent extends StepEvent {
-  final int stepId;
-  EditStepEvent(this.stepId);
+// Event triggered when the user wants to edit a node
+class EditNodeEvent extends TreeEvent {
+  final int nodeId;
+  EditNodeEvent(this.nodeId);
 }
 
-// Event triggered when the user submits their changes to a step's text
-class UpdateStepTextEvent extends StepEvent {
-  final ReqStep step;
+// Event triggered when the user submits their changes to a node's text
+class UpdateNodeTextEvent extends TreeEvent {
+  final Node node;
   final String newText;
-  UpdateStepTextEvent(this.step, this.newText);
+  UpdateNodeTextEvent(this.node, this.newText);
 }
 
-class MoveStepUpEvent extends StepEvent {
-  final ReqStep step;
-  MoveStepUpEvent(this.step);
+class MoveNodeUpEvent extends TreeEvent {
+  final Node node;
+  MoveNodeUpEvent(this.node);
 }
 
-class MoveStepDownEvent extends StepEvent {
-  final ReqStep step;
-  MoveStepDownEvent(this.step);
+class MoveNodeDownEvent extends TreeEvent {
+  final Node node;
+  MoveNodeDownEvent(this.node);
 }
 
-class IndentStepForwardEvent extends StepEvent {
-  final ReqStep step;
-  IndentStepForwardEvent(this.step);
+class IndentNodeForwardEvent extends TreeEvent {
+  final Node node;
+  IndentNodeForwardEvent(this.node);
 }
 
-class IndentBackwardEvent extends StepEvent {
-  final ReqStep step;
-  IndentBackwardEvent(this.step);
+class IndentNodeBackwardEvent extends TreeEvent {
+  final Node node;
+  IndentNodeBackwardEvent(this.node);
 }
 
-class DeleteStepEvent extends StepEvent {
-  final ReqStep step;
-  DeleteStepEvent(this.step);
+class DeleteNodeEvent extends TreeEvent {
+  final Node node;
+  DeleteNodeEvent(this.node);
 }
 
-class AddStepEvent extends StepEvent {
+class AddNodeEvent extends TreeEvent {
   final String type;
   final String text;
-  final Flow flow;
+  final Tree tree;
 
-  AddStepEvent(this.type, this.text, this.flow);
+  AddNodeEvent(this.type, this.text, this.tree);
 }

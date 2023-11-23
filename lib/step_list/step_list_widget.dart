@@ -1,47 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reqspec/step_list/step_bloc.dart';
+import 'package:reqspec/step_list/tree_bloc.dart';
 
 import 'models.dart';
 import 'models.dart' as reqspec_models;
 
-class StepListPage extends StatelessWidget {
-  final int flowId;
+class NodeListPage extends StatelessWidget {
+  final int treeId;
 
-  const StepListPage({
+  const NodeListPage({
     Key? key,
-    required this.flowId,
+    required this.treeId,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // Create a unique BlocProvider for each StepListWidget
-    return BlocProvider<StepBloc>(
-      create: (_) => StepBloc()..add(LoadFlowsEvent()),
-      child: StepListWidget(flowId: flowId),
+    return BlocProvider<NodeBloc>(
+      create: (_) => NodeBloc()..add(LoadTreesEvent()),
+      child: NodeListWidget(treeId: treeId),
     );
   }
 }
 
-class StepListWidget extends StatelessWidget {
-  final List<ReqStep>? steps;
-  final int flowId;
+class NodeListWidget extends StatelessWidget {
+  final List<Node>? nodes;
+  final int treeId;
 
-  const StepListWidget({
+  const NodeListWidget({
     Key? key,
-    required this.flowId,
-    this.steps,
+    required this.treeId,
+    this.nodes,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // If steps are provided, build the UI from the provided steps
     // Otherwise, build the UI from the steps in the current state
-    return buildStepsFromBloc(context);
+    return buildNodesFromBloc(context);
   }
 
-  Widget buildStepCard(
-    ReqStep step,
+  Widget buildNodeCard(
+    Node node,
     bool isSelected,
     BuildContext context,
     bool isEditing,
@@ -50,9 +51,9 @@ class StepListWidget extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isSelected) {
-          context.read<StepBloc>().add(SelectStepEvent(-1)); // Deselect
+          context.read<NodeBloc>().add(SelectNodeEvent(-1)); // Deselect
         } else {
-          context.read<StepBloc>().add(SelectStepEvent(step.id)); // Select
+          context.read<NodeBloc>().add(SelectNodeEvent(node.id)); // Select
         }
       },
       child: Card(
@@ -63,7 +64,7 @@ class StepListWidget extends StatelessWidget {
           children: [
             ListTile(
               leading: Text(
-                step.number,
+                node.number,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -72,7 +73,7 @@ class StepListWidget extends StatelessWidget {
               ),
               title: isEditing && isSelected
                   ? TextField(
-                      controller: TextEditingController(text: step.text),
+                      controller: TextEditingController(text: node.text),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -87,12 +88,12 @@ class StepListWidget extends StatelessWidget {
                       },
                       onSubmitted: (String text) {
                         context
-                            .read<StepBloc>()
-                            .add(UpdateStepTextEvent(step, text));
+                            .read<NodeBloc>()
+                            .add(UpdateNodeTextEvent(node, text));
                       },
                     )
                   : Text(
-                      step.text,
+                      node.text,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: isSelected ? Colors.white : Colors.black,
@@ -118,8 +119,8 @@ class StepListWidget extends StatelessWidget {
                       IconButton(
                         icon: Icon(Icons.arrow_upward_rounded),
                         onPressed: () {
-                          context.read<StepBloc>().add(MoveStepUpEvent(step));
-                          print('Move ${step.text} up');
+                          context.read<NodeBloc>().add(MoveNodeUpEvent(node));
+                          print('Move ${node.text} up');
                           // Handle move up
                         },
                         color: Colors.white,
@@ -127,8 +128,8 @@ class StepListWidget extends StatelessWidget {
                       IconButton(
                         icon: Icon(Icons.arrow_downward_rounded),
                         onPressed: () {
-                          context.read<StepBloc>().add(MoveStepDownEvent(step));
-                          print('Move ${step.text} down');
+                          context.read<NodeBloc>().add(MoveNodeDownEvent(node));
+                          print('Move ${node.text} down');
                           // Handle move down
                         },
                         color: Colors.white,
@@ -137,9 +138,9 @@ class StepListWidget extends StatelessWidget {
                         icon: Icon(Icons.keyboard_arrow_right_rounded),
                         onPressed: () {
                           context
-                              .read<StepBloc>()
-                              .add(IndentStepForwardEvent(step));
-                          print('Indent ${step.text} to the right');
+                              .read<NodeBloc>()
+                              .add(IndentNodeForwardEvent(node));
+                          print('Indent ${node.text} to the right');
                         },
                         color: Colors.white,
                       ),
@@ -147,17 +148,17 @@ class StepListWidget extends StatelessWidget {
                         icon: Icon(Icons.keyboard_arrow_left_rounded),
                         onPressed: () {
                           context
-                              .read<StepBloc>()
-                              .add(IndentBackwardEvent(step));
-                          print('Indent ${step.text} to the left');
+                              .read<NodeBloc>()
+                              .add(IndentNodeBackwardEvent(node));
+                          print('Indent ${node.text} to the left');
                         },
                         color: Colors.white,
                       ),
                       IconButton(
                         icon: Icon(Icons.delete_forever_rounded),
                         onPressed: () {
-                          context.read<StepBloc>().add(DeleteStepEvent(step));
-                          print('Delete ${step.text}');
+                          context.read<NodeBloc>().add(DeleteNodeEvent(node));
+                          print('Delete ${node.text}');
                         },
                         color: Colors.white,
                       ),
@@ -166,16 +167,16 @@ class StepListWidget extends StatelessWidget {
                               icon: Icon(Icons.edit),
                               onPressed: () {
                                 context
-                                    .read<StepBloc>()
-                                    .add(EditStepEvent(step.id));
+                                    .read<NodeBloc>()
+                                    .add(EditNodeEvent(node.id));
                                 // Handle delete
                               },
                               color: Colors.white,
                             )
                           : IconButton(
                               onPressed: () {
-                                context.read<StepBloc>().add(
-                                    UpdateStepTextEvent(step, editingText));
+                                context.read<NodeBloc>().add(
+                                    UpdateNodeTextEvent(node, editingText));
                               },
                               icon: Icon(
                                 Icons.check,
@@ -192,32 +193,32 @@ class StepListWidget extends StatelessWidget {
     );
   }
 
-  Widget buildStepsFromBloc(BuildContext context) {
-    return BlocBuilder<StepBloc, ReqSpecStepState>(
+  Widget buildNodesFromBloc(BuildContext context) {
+    return BlocBuilder<NodeBloc, NodeState>(
       builder: (context, state) {
-        if (state is InitialReqSpecStepState) {
+        if (state is InitialNodeState) {
           return const Center(child: CircularProgressIndicator());
-        } else if (state is FlowsLoadedState ||
-            state is FlowsNumberedState ||
-            state is StepSelectedState ||
-            state is EditingStepState) {
-          // final steps = state is FlowsLoadedState
-          //     ? state.flows.first.steps
-          //     : (state as FlowsNumberedState).flows.first.steps;
-          reqspec_models.Flow flow =
-              getFlowById((state as dynamic).flows, flowId);
-          final steps = getAllSteps(flow);
-          var selectedStepId = -1;
+        } else if (state is TreesLoadedState ||
+            state is TreesNumberedState ||
+            state is NodeSelectedState ||
+            state is EditingNodeState) {
+          // final steps = state is treesLoadedState
+          //     ? state.trees.first.steps
+          //     : (state as treesNumberedState).trees.first.steps;
+          reqspec_models.Tree tree =
+              gettreeById((state as dynamic).trees, treeId);
+          final nodes = getAllNodes(tree);
+          var selectedNodeId = -1;
           var isEditing = false;
-          if (state is StepSelectedState) {
-            selectedStepId = (state as dynamic).selectedStepId;
+          if (state is NodeSelectedState) {
+            selectedNodeId = (state as dynamic).selectedNodeId;
           }
-          if (state is EditingStepState) {
-            selectedStepId = state.editingStepId;
+          if (state is EditingNodeState) {
+            selectedNodeId = state.editingNodeId;
             isEditing = true;
           }
 
-          var flowType = convertWord(flow.type);
+          var treeType = convertWord(tree.type);
 
           return Card(
             margin: EdgeInsets.all(10.0),
@@ -238,16 +239,16 @@ class StepListWidget extends StatelessWidget {
                     children: [
                       ListTile(
                         title: Text(
-                          flowType,
+                          treeType,
                           style: TextStyle(
                             fontWeight: FontWeight.bold, // Bold title
                             fontSize: 18,
                           ),
                         ),
                       ),
-                      ...getStepList(
-                        steps,
-                        selectedStepId,
+                      ...getNodeList(
+                        nodes,
+                        selectedNodeId,
                         context,
                         isEditing,
                       ),
@@ -260,11 +261,11 @@ class StepListWidget extends StatelessWidget {
                       icon: Icon(Icons.add,
                           color: Colors.blue), // Styled add button
                       onPressed: () async {
-                        String? newText = await addStepModal(context);
+                        String? newText = await addNodeModal(context);
                         if (newText != null) {
                           context
-                              .read<StepBloc>()
-                              .add(AddStepEvent(flow.type, newText, flow));
+                              .read<NodeBloc>()
+                              .add(AddNodeEvent(tree.type, newText, tree));
                         }
                       },
                     ),
@@ -273,7 +274,7 @@ class StepListWidget extends StatelessWidget {
               ),
             ),
           );
-        } else if (state is ErrorReqSpecStepState) {
+        } else if (state is ErrorState) {
           return Center(child: Text('Error: ${state.message}'));
         } else {
           return const SizedBox(); // Fallback for any other unhandled states
@@ -295,57 +296,57 @@ class StepListWidget extends StatelessWidget {
     print(convertedWord); // This
   }
 
-  List<Widget> getStepList(
-    List<ReqStep> steps,
-    int selectedStepId,
+  List<Widget> getNodeList(
+    List<Node> nodes,
+    int selectedNodeId,
     BuildContext context,
     bool isEditing,
   ) {
     // Map each step to a widget using the buildStepCard function
     // and then convert it to a list using toList().
-    List<Widget> stepWidgets = steps.map<Widget>((step) {
-      return buildStepCard(step, step.id == selectedStepId, context, isEditing);
+    List<Widget> nodeWidgets = nodes.map<Widget>((node) {
+      return buildNodeCard(node, node.id == selectedNodeId, context, isEditing);
     }).toList();
 
-    return stepWidgets; // Use the list of widgets here
+    return nodeWidgets; // Use the list of widgets here
   }
 
-  getAllSteps(reqspec_models.Flow flow) {
-    print(flow.steps);
-    List<ReqStep> stepList = [];
-    for (var child in flow.steps) {
-      _getAllSteps(child, stepList);
+  getAllNodes(reqspec_models.Tree tree) {
+    print(tree.children);
+    List<Node> nodeList = [];
+    for (var child in tree.children) {
+      _getAllNodes(child, nodeList);
     }
-    return stepList;
+    return nodeList;
   }
 
-  _getAllSteps(ReqStep root, List<ReqStep> stepList) {
-    stepList.add(root);
+  _getAllNodes(Node root, List<Node> nodeList) {
+    nodeList.add(root);
     for (var child in root.children) {
-      _getAllSteps(child, stepList);
+      _getAllNodes(child, nodeList);
     }
   }
 
-  getFlowById(List<reqspec_models.Flow> flows, int flowId) {
-    for (var flow in flows) {
-      if (flow.id == flowId) {
-        return flow;
+  gettreeById(List<reqspec_models.Tree> trees, int treeId) {
+    for (var tree in trees) {
+      if (tree.id == treeId) {
+        return tree;
       }
     }
-    throw Exception('The flow id specified dosen\'t exist');
+    throw Exception('The tree id specified dosen\'t exist');
   }
 
-  Future<String?> addStepModal(BuildContext context) async {
+  Future<String?> addNodeModal(BuildContext context) async {
     TextEditingController textController = TextEditingController();
 
     return showDialog<String>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Add Step'),
+          title: const Text('Add Node'),
           content: TextField(
             controller: textController,
-            decoration: InputDecoration(hintText: "Enter step text here"),
+            decoration: InputDecoration(hintText: "Enter node text here"),
             onSubmitted: (String text) {
               Navigator.of(context).pop(text);
             },
