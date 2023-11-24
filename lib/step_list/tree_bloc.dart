@@ -3,16 +3,20 @@ import 'dart:collection';
 import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
+import 'http_providor.dart';
 import 'models.dart';
 
 import 'step_bloc.dart';
 
+//TODO make the order change on every event
+
 class NodeBloc extends Bloc<TreeEvent, NodeState> {
   List<Tree> trees = [];
   var url = 'http://192.168.0.4:8000/reqspec';
-
+  late TreeHttpProvider httpService;
   NodeBloc() : super(InitialNodeState()) {
+    this.httpService = TreeHttpProvider();
     on<LoadTreesEvent>(_onLoadTreesEvent);
     on<NumberNodesEvent>(_onNumberNodesEvent);
     on<SelectNodeEvent>(_onNodeSelectedEvent);
@@ -40,32 +44,34 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
       } else {
         newParent = event.node.parent!.parent;
       }
-      var requestBody = {};
-      if (!newParentIsTree) {
-        requestBody = {
-          "parent": newParent.id, // Assuming newParent.id is not null
-          "tree": null, // Sending null as required
-          "id": event.node.id,
-          "type": event.node.type
-        };
-      } else {
-        requestBody = {
-          "parent": null, // Sending null as required
-          "tree": newParent.id, // Assuming newParent.id is not null
-          "id": event.node.id,
-          "type": event.node.type
-        };
-      }
+      // var requestBody = {};
+      // if (!newParentIsTree) {
+      //   requestBody = {
+      //     "parent": newParent.id, // Assuming newParent.id is not null
+      //     "tree": null, // Sending null as required
+      //     "id": event.node.id,
+      //     "type": event.node.type
+      //   };
+      // } else {
+      //   requestBody = {
+      //     "parent": null, // Sending null as required
+      //     "tree": newParent.id, // Assuming newParent.id is not null
+      //     "id": event.node.id,
+      //     "type": event.node.type
+      //   };
+      // }
+      //
+      // var response = await http.patch(
+      //     Uri.parse('${url}/reqspec/nodes/${event.node.id}/'),
+      //     headers: {"Content-Type": "application/json"},
+      //     body: jsonEncode(requestBody)); // Encoding the request body as JSON
+      //
+      // print(response.body);
+      // print(response.statusCode);
+      httpService.httpIndentNodeBackward(
+          event.node, newParent, newParentIsTree);
 
-      var response = await http.patch(
-          Uri.parse('${url}/reqspec/nodes/${event.node.id}/'),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode(requestBody)); // Encoding the request body as JSON
-
-      print(response.body);
-      print(response.statusCode);
-
-      var orderMap = {};
+      Map<String, int> orderMap = {};
 
       bool targetNodeReached = false;
       orderMap[event.node.id.toString()] = parent!.order + 1;
@@ -96,11 +102,13 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
       }
 
       print(orderMap);
+      //
+      // http.post(
+      //   Uri.parse('${url}/reqspec/nodes/set_order/'),
+      //   body: jsonEncode(orderMap),
+      // );
 
-      http.post(
-        Uri.parse('${url}/reqspec/nodes/set_order/'),
-        body: jsonEncode(orderMap),
-      );
+      httpService.httpSetNodeOrder(orderMap);
 
       parent.sortNodes();
       newParent.sortNodes();
@@ -120,24 +128,25 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
         parent = event.node.parent;
       }
       Node newParent = parent.getNodeByOrder(event.node.order - 1);
-      var requestBody = {
-        "parent": newParent.id, // Assuming newParent.id is not null
-        "tree": null, // Sending null as required
-        "id": event.node.id,
-        "type": event.node.type
-      };
-
-      var response = await http.patch(
-          Uri.parse('${url}/reqspec/nodes/${event.node.id}/'),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode(requestBody)); // Encoding the request body as JSON
-
-      print(response.body);
-      print(response.statusCode);
+      // var requestBody = {
+      //   "parent": newParent.id, // Assuming newParent.id is not null
+      //   "tree": null, // Sending null as required
+      //   "id": event.node.id,
+      //   "type": event.node.type
+      // };
+      //
+      // var response = await http.patch(
+      //     Uri.parse('${url}/reqspec/nodes/${event.node.id}/'),
+      //     headers: {"Content-Type": "application/json"},
+      //     body: jsonEncode(requestBody)); // Encoding the request body as JSON
+      //
+      // print(response.body);
+      // print(response.statusCode);help my texfffffffffffffffffffffmy textr cant get out nooooooo
+      httpService.httpIndentNodeForward(event.node, newParent);
 
       newParent.addAsChild(event.node);
 
-      var orderMap = {};
+      Map<String, int> orderMap = {};
       for (var i = 1; i <= newParent.children.length; i++) {
         if (!(newParent.children[i - 1].order == i)) {
           newParent.children[i - 1].order = i;
@@ -151,13 +160,14 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
         }
       }
 
-      var a = {"parent": newParent.id, "tree": (null).toString()};
-      print(a);
-
-      print(orderMap);
-
-      http.post(Uri.parse('${url}/reqspec/nodes/set_order/'),
-          body: jsonEncode(orderMap));
+      // var a = {"parent": newParent.id, "tree": (null).toString()};
+      // print(a);
+      //
+      // print(orderMap);
+      //
+      // http.post(Uri.parse('${url}/reqspec/nodes/set_order/'),
+      //     body: jsonEncode(orderMap));
+      httpService.httpSetNodeOrder(orderMap);
 
       parent.sortNodes();
       newParent.sortNodes();
@@ -171,7 +181,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     LoadTreesEvent event,
     Emitter<NodeState> emit,
   ) async {
-    final response = await http.get(Uri.parse('${url}/trees/'));
+    final response = await httpService.httpLoadTrees();
     if (response.statusCode == 200) {
       trees = parseTreesFromJson(response.body);
       emit(TreesLoadedState(trees));
@@ -219,9 +229,8 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     UpdateNodeTextEvent event,
     Emitter<NodeState> emit,
   ) async {
-    final response = await http.patch(
-        Uri.parse('${url}/nodes/${event.node.id}/'),
-        body: {"text": event.newText});
+    final response =
+        await httpService.httpUpdateNodeText(event.node, event.newText);
     if (response.statusCode == 200) {
       event.node.text = event.newText;
       emit(NodeSelectedState(trees, event.node.id));
@@ -237,12 +246,13 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     dynamic parent = event.node.parent ?? event.node.tree;
     if (event.node.order > 1) {
       Node nodeToSwap = parent.getNodeByOrder(event.node.order - 1);
-      final responseSwap = await http.patch(
-          Uri.parse('${url}/nodes/${nodeToSwap.id}/'),
-          body: {'order': (event.node.order).toString()});
-      final responseCurrent = await http.patch(
-          Uri.parse('${url}/nodes/${event.node.id}/'),
-          body: {'order': (event.node.order - 1).toString()});
+
+      // Use TreeHttpProvider for HTTP requests
+      final responseSwap =
+          await httpService.httpMoveNode(nodeToSwap, event.node.order);
+      final responseCurrent =
+          await httpService.httpMoveNode(event.node, event.node.order - 1);
+
       if (responseSwap.statusCode == 200 && responseCurrent.statusCode == 200) {
         nodeToSwap.order = event.node.order;
         event.node.order -= 1;
@@ -262,16 +272,17 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     dynamic parent = event.node.parent ?? event.node.tree;
     if (event.node.order < parent.children.length) {
       Node nodeToSwap = parent.getNodeByOrder(event.node.order + 1);
-      final responseSwap = await http.patch(
-          Uri.parse('${url}/nodes/${nodeToSwap.id}/'),
-          body: {'order': (event.node.order).toString()});
-      final responseCurrent = await http.patch(
-          Uri.parse('${url}/nodes/${event.node.id}/'),
-          body: {'order': (event.node.order + 1).toString()});
+
+      // Use TreeHttpProvider for HTTP requests
+      final responseSwap =
+          await httpService.httpMoveNode(nodeToSwap, event.node.order);
+      final responseCurrent =
+          await httpService.httpMoveNode(event.node, event.node.order + 1);
+
       if (responseSwap.statusCode == 200 && responseCurrent.statusCode == 200) {
         nodeToSwap.order = event.node.order;
         event.node.order += 1;
-        parent!.sortNodes();
+        parent.sortNodes();
         numberNodes();
         emit(NodeSelectedState(trees, event.node.id));
       } else {
@@ -285,8 +296,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     Emitter<NodeState> emit,
   ) async {
     dynamic parent = event.node.parent ?? event.node.tree;
-    final response =
-        await http.delete(Uri.parse('${url}/nodes/${event.node.id}/'));
+    final response = await httpService.httpDeleteNode(event.node);
     print(response.statusCode);
     if (response.statusCode == 204) {
       parent!.removeChild(event.node);
@@ -309,10 +319,8 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     Emitter<NodeState> emit,
   ) async {
     var order = event.tree.children.length + 1;
-    final response = await http.post(
-        Uri.parse('${url}/trees/${event.tree.id}/create_node/'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"value": event.text, "order": order}));
+    final response =
+        await httpService.httpAddNode(event.tree, event.text, order);
     if (response.statusCode == 201) {
       var serializedResponse = jsonDecode(response.body);
       event.tree.children.add(Node(
@@ -332,17 +340,17 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     }
   }
 
-  Future<List<Tree>> fetchTrees() async {
-    final uri = Uri.parse('${url}/trees/');
-    final response = await http.get(uri);
-    if (response.statusCode == 200) {
-      print(response.body);
-      return parseTreesFromJson(response.body);
-    } else {
-      print(response.body);
-      throw Exception('Failed to load trees');
-    }
-  }
+  // Future<List<Tree>> _fetchTrees() async {
+  //   final uri = Uri.parse('${url}/trees/');
+  //   final response = await http.get(uri);
+  //   if (response.statusCode == 200) {
+  //     print(response.body);
+  //     return parseTreesFromJson(response.body);
+  //   } else {
+  //     print(response.body);
+  //     throw Exception('Failed to load trees');
+  //   }
+  // }
 
   void numberNodes() {
     for (var tree in trees) {

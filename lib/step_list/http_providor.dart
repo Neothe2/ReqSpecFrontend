@@ -9,82 +9,156 @@ class TreeHttpProvider {
   var treesRoute = '/trees';
   var nodesRoute = '/nodes';
 
-  Future<List<Flow>> getAll() async {
-    var response = await http.get(Uri.parse('$url${treesRoute}/'));
+  Future<http.Response> httpIndentNodeBackward(
+      Node node, dynamic newParent, bool newParentIsTree) async {
+    var requestBody = newParentIsTree
+        ? {
+            "parent": null,
+            "tree": newParent.id,
+            "id": node.id,
+            "type": node.type
+          }
+        : {
+            "parent": newParent.id,
+            "tree": null,
+            "id": node.id,
+            "type": node.type
+          };
 
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      return parseFlowsFromJson(response.body);
-    } else {
-      print(response.body);
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to load flows');
-    }
+    return await http.patch(Uri.parse('${url}/reqspec/nodes/${node.id}/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(requestBody));
   }
 
-  addNode(Tree tree, String text) async {
-    var order = tree.children.length + 1;
-
-    var response = await http.post(
-      Uri.parse(
-        '${url}/trees/${tree.id}/create_step/',
-      ),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"value": text, "order": order}),
-    );
-
-    return response;
-  }
-
-  editNode(Node node, String newText) async {
-    return await http
-        .patch(Uri.parse('$url/nodes/${node.id}/'), body: {"text": newText});
-  }
-
-  setOrder(Map<String, int> orderMap) async {
-    return await http.post(Uri.parse('${url}/steps/set_order/'),
-        body: jsonEncode(orderMap));
-  }
-
-  indentForward(Node node, newParent) async {
+  Future<http.Response> httpIndentNodeForward(Node node, Node newParent) async {
     var requestBody = {
-      "parent": newParent.id, // Assuming newParent.id is not null
-      "tree": null, // Sending null as required
+      "parent": newParent.id,
+      "tree": null,
       "id": node.id,
       "type": node.type
     };
 
+    return await http.patch(Uri.parse('${url}/reqspec/nodes/${node.id}/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(requestBody));
+  }
+
+  Future<http.Response> httpLoadTrees() async {
+    return await http.get(Uri.parse('${url}/trees/'));
+  }
+
+  Future<http.Response> httpUpdateNodeText(Node node, String newText) async {
+    return await http
+        .patch(Uri.parse('${url}/nodes/${node.id}/'), body: {"text": newText});
+  }
+
+  Future<http.Response> httpMoveNode(Node node, int newOrder) async {
     return await http.patch(Uri.parse('${url}/nodes/${node.id}/'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(requestBody)); // Encoding the request body as JSON
+        body: {'order': newOrder.toString()});
   }
 
-  indentBackward(Node node, newParent) async {
-    var requestBody = {};
-    if (newParent is Node) {
-      requestBody = {
-        "parent": newParent.id, // Assuming newParent.id is not null
-        "tree": null, // Sending null as required
-        "id": node.id,
-        "type": node.type
-      };
-    } else {
-      requestBody = {
-        "parent": null, // Sending null as required
-        "tree": newParent.id, // Assuming newParent.id is not null
-        "id": node.id,
-        "type": node.type
-      };
-    }
-
-    return await http.patch(Uri.parse('${url}/steps/${node.id}/'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(requestBody)); // Encoding the request body as JSON
-  }
-
-  delete(Node node) async {
+  Future<http.Response> httpDeleteNode(Node node) async {
     return await http.delete(Uri.parse('${url}/nodes/${node.id}/'));
+  }
+
+  Future<http.Response> httpAddNode(Tree tree, String text, int order) async {
+    return await http.post(Uri.parse('${url}/trees/${tree.id}/create_node/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"text": text, "order": order}));
+  }
+
+  Future<http.Response> httpSetNodeOrder(Map<String, int> orderMap) async {
+    return await http.post(Uri.parse('${url}/nodes/set_order/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(orderMap));
+  }
+}
+
+class DummyHttpProvider extends TreeHttpProvider {
+  @override
+  var url = 'http://192.168.0.4:8000/reqspec';
+  @override
+  var treesRoute = '/trees';
+  @override
+  var nodesRoute = '/nodes';
+
+  @override
+  Future<http.Response> httpIndentNodeBackward(
+      Node node, dynamic newParent, bool newParentIsTree) async {
+    var requestBody = newParentIsTree
+        ? {
+            "parent": null,
+            "tree": newParent.id,
+            "id": node.id,
+            "type": node.type
+          }
+        : {
+            "parent": newParent.id,
+            "tree": null,
+            "id": node.id,
+            "type": node.type
+          };
+    print('Syke');
+
+    return await http.patch(Uri.parse('${url}/reqspec/nodes/${node.id}/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(requestBody));
+  }
+
+  @override
+  Future<http.Response> httpIndentNodeForward(Node node, Node newParent) async {
+    var requestBody = {
+      "parent": newParent.id,
+      "tree": null,
+      "id": node.id,
+      "type": node.type
+    };
+
+    print('Syke');
+    return await http.patch(Uri.parse('${url}/reqspec/nodes/${node.id}/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(requestBody));
+  }
+
+  @override
+  Future<http.Response> httpLoadTrees() async {
+    print('Syke');
+    return await http.get(Uri.parse('${url}/trees/'));
+  }
+
+  @override
+  Future<http.Response> httpUpdateNodeText(Node node, String newText) async {
+    print('Syke');
+    return await http
+        .patch(Uri.parse('${url}/nodes/${node.id}/'), body: {"text": newText});
+  }
+
+  @override
+  Future<http.Response> httpMoveNode(Node node, int newOrder) async {
+    print('Syke');
+    return await http.patch(Uri.parse('${url}/nodes/${node.id}/'),
+        body: {'order': newOrder.toString()});
+  }
+
+  @override
+  Future<http.Response> httpDeleteNode(Node node) async {
+    print('Syke');
+    return await http.delete(Uri.parse('${url}/nodes/${node.id}/'));
+  }
+
+  @override
+  Future<http.Response> httpAddNode(Tree tree, String text, int order) async {
+    print('Syke');
+    return await http.post(Uri.parse('${url}/trees/${tree.id}/create_node/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"text": text, "order": order}));
+  }
+
+  @override
+  Future<http.Response> httpSetNodeOrder(Map<String, int> orderMap) async {
+    print('Syke');
+    return await http.post(Uri.parse('${url}/nodes/set_order/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(orderMap));
   }
 }
