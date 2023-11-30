@@ -167,10 +167,16 @@ class StepHttpProvider extends TreeHttpProvider {
 
 class AlternateFlowHttpProvidor extends StepHttpProvider {
   @override
-  // TODO: implement treesRoute
   String get treesRoute => '/alternate_flows';
 
   @override
-  // TODO: implement nodesRoute
   String get nodesRoute => '/alternate_flow_steps';
+}
+
+class ExceptionFlowHttpProvidor extends StepHttpProvider {
+  @override
+  String get treesRoute => '/exception_flows';
+
+  @override
+  String get nodesRoute => '/exception_flow_steps';
 }

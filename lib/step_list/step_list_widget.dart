@@ -9,17 +9,16 @@ import 'models.dart' as reqspec_models;
 
 class NodeListPage extends StatelessWidget {
   final int treeId;
+  late TreeHttpProvider httpProvider;
 
-  const NodeListPage({
-    Key? key,
-    required this.treeId,
-  }) : super(key: key);
+  NodeListPage({Key? key, required this.treeId, required this.httpProvider})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // Create a unique BlocProvider for each StepListWidget
     return BlocProvider<NodeBloc>(
-      create: (_) => NodeBloc(StepHttpProvider())..add(LoadTreesEvent()),
+      create: (_) => NodeBloc(httpProvider)..add(LoadTreesEvent()),
       child: NodeListWidget(treeId: treeId),
     );
   }

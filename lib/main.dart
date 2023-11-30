@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:reqspec/step_list/http_providor.dart';
 import 'package:reqspec/step_list/step_bloc.dart';
 import 'package:reqspec/step_list/step_list_widget.dart';
+
+import 'step_list/models.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,39 +27,155 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
   final String title;
 
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
   @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  List<NodeListPage> alternate_flows = [];
+  List<NodeListPage> exception_flows = [];
+  late NodeListPage main_flow;
+  dynamic use_case_description = {};
+  bool treesFetched = false;
+
+  getTrees(int use_case_description_id) async {
+    var response = await http.get(Uri.parse(
+        'http://10.0.2.2:8000/reqspec/use_case_descriptions/$use_case_description_id'));
+    var serializedData = jsonDecode(response.body);
+    use_case_description = serializedData;
+    for (var alternateFlowId in serializedData['alternate_flows']) {
+      alternate_flows.add(NodeListPage(
+        treeId: alternateFlowId, // Replace with your first flowId
+        httpProvider: AlternateFlowHttpProvidor(),
+      ));
+    }
+    for (var exceptionFlowId in serializedData['exception_flows']) {
+      exception_flows.add(NodeListPage(
+        treeId: exceptionFlowId, // Replace with your first flowId
+        httpProvider: ExceptionFlowHttpProvidor(),
+      ));
+    }
+
+    main_flow = NodeListPage(
+      treeId: serializedData['main_flow'], // Replace with your first flowId
+      httpProvider: StepHttpProvider(),
+    );
+
+    setState(() {
+      treesFetched = true;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getTrees(1);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var text = 'Add alternate flows';
+    var text = 'Add Alternate Flows';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(widget.title),
       ),
       body: ListView(
-        children: <Widget>[
-          NodeListPage(
-            treeId: 1, // Replace with your first flowId
-          ),
-          TextButton(
-            onPressed: () {
-              // SystemNavigator.pop();
-              // throw Exception('FUCK YOU!');
-            },
-            child: Text(text),
-            style: ButtonStyle(
-              backgroundColor: MaterialStatePropertyAll(Colors.yellow),
-              foregroundColor: MaterialStatePropertyAll(Colors.black),
-            ),
-          ),
-          // NodeListPage(
-          //   treeId: 6, // Replace with your second flowId
-          // ),
-        ],
+        children: treesFetched
+            ? <Widget>[
+                main_flow,
+                TextButton(
+                  onPressed: () async {
+                    await addAlternateFlow();
+                  },
+                  child: Text(text),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(Colors.yellow),
+                    foregroundColor: MaterialStatePropertyAll(Colors.black),
+                  ),
+                ),
+                Column(
+                  children: alternate_flows,
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await addExceptionFlow();
+                  },
+                  child: Text('Add Exception Flow'),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(Colors.yellow),
+                    foregroundColor: MaterialStatePropertyAll(Colors.black),
+                  ),
+                ),
+
+                Column(
+                  children: exception_flows,
+                )
+                // NodeListPage(
+                //   treeId: 6, // Replace with your second flowId
+                // ),
+              ]
+            : [],
       ),
     );
+  }
+
+  addAlternateFlow() async {
+    var response = await http.post(
+        Uri.parse('http://10.0.2.2:8000/reqspec/alternate_flows/'),
+        body: {});
+
+    var serializedResponse = jsonDecode(response.body);
+    setState(() {
+      use_case_description['alternate_flows'] = [
+        ...use_case_description['alternate_flows'],
+        serializedResponse['id']
+      ];
+    });
+    var newresponse = await http.put(
+        Uri.parse('http://10.0.2.2:8000/reqspec/use_case_descriptions/1/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(use_case_description));
+
+    print(newresponse.body);
+    print(newresponse.statusCode);
+    setState(() {
+      alternate_flows.add(NodeListPage(
+        treeId: serializedResponse['id'], // Replace with your first flowId
+        httpProvider: AlternateFlowHttpProvidor(),
+      ));
+    });
+  }
+
+  addExceptionFlow() async {
+    var response = await http.post(
+        Uri.parse('http://10.0.2.2:8000/reqspec/exception_flows/'),
+        body: {});
+
+    var serializedResponse = jsonDecode(response.body);
+    setState(() {
+      use_case_description['exception_flows'] = [
+        ...use_case_description['exception_flows'],
+        serializedResponse['id']
+      ];
+    });
+    var newresponse = await http.put(
+        Uri.parse('http://10.0.2.2:8000/reqspec/use_case_descriptions/1/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(use_case_description));
+
+    print(newresponse.body);
+    print(newresponse.statusCode);
+    setState(() {
+      exception_flows.add(NodeListPage(
+        treeId: serializedResponse['id'], // Replace with your first flowId
+        httpProvider: ExceptionFlowHttpProvidor(),
+      ));
+    });
   }
 }
