@@ -28,22 +28,23 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     on<IndentNodeBackwardEvent>(_onIndentNodeBackwardEvent);
     on<DeleteNodeEvent>(_onDeleteNodeEvent);
     on<AddNodeEvent>(_onAddNodeEvent);
+    on<DeselectNodeEvent>(_onDeselectNode);
   }
 
   FutureOr<void> _onIndentNodeBackwardEvent(
     IndentNodeBackwardEvent event,
     Emitter<NodeState> emit,
   ) async {
-    if (event.node.parent != null) {
+    if (event.node.parent != null && event.node.parent!.parent != null) {
       var parent = event.node.parent;
-      var newParent;
-      bool newParentIsTree = false;
-      if (event.node.parent!.parent == null) {
-        newParent = event.node.parent!.tree;
-        newParentIsTree = true;
-      } else {
-        newParent = event.node.parent!.parent;
-      }
+      var newParent = event.node.parent!.parent!;
+      // bool newParentIsTree = false;
+      // if (event.node.parent!.parent == null) {
+      //   newParent = event.node.parent!.tree;
+      //   newParentIsTree = true;
+      // } else {
+      //   newParent = event.node.parent!.parent;
+      // }
       // var requestBody = {};
       // if (!newParentIsTree) {
       //   requestBody = {
@@ -68,8 +69,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
       //
       // print(response.body);
       // print(response.statusCode);
-      httpService.httpIndentNodeBackward(
-          event.node, newParent, newParentIsTree);
+      httpService.httpIndentNodeBackward(event.node, newParent);
 
       Map<String, int> orderMap = {};
 
@@ -114,19 +114,14 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
       newParent.sortNodes();
       numberNodes();
 
-      emit(NodeSelectedState(trees, event.node.id));
+      emit(NodeSelectedState(trees, event.node));
     }
   }
 
   FutureOr<void> _onIndentNodeForwardEvent(
       IndentNodeForwardEvent event, Emitter<NodeState> emit) async {
     if (event.node.order > 1) {
-      var parent;
-      if (event.node.parent == null) {
-        parent = event.node.tree;
-      } else {
-        parent = event.node.parent;
-      }
+      var parent = event.node.parent!;
       Node newParent = parent.getNodeByOrder(event.node.order - 1);
       // var requestBody = {
       //   "parent": newParent.id, // Assuming newParent.id is not null
@@ -173,7 +168,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
       newParent.sortNodes();
       numberNodes();
 
-      emit(NodeSelectedState(trees, event.node.id));
+      emit(NodeSelectedState(trees, event.node));
     }
   }
 
@@ -215,7 +210,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     SelectNodeEvent event,
     Emitter<NodeState> emit,
   ) async {
-    emit(NodeSelectedState(trees, event.nodeId));
+    emit(NodeSelectedState(trees, event.node));
   }
 
   FutureOr<void> _onEditNodeEvent(
@@ -233,7 +228,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
         await httpService.httpUpdateNodeText(event.node, event.newText);
     if (response.statusCode == 200) {
       event.node.text = event.newText;
-      emit(NodeSelectedState(trees, event.node.id));
+      emit(NodeSelectedState(trees, event.node));
     } else {
       emit(ErrorState('Failed to update node text'));
     }
@@ -243,7 +238,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     MoveNodeUpEvent event,
     Emitter<NodeState> emit,
   ) async {
-    dynamic parent = event.node.parent ?? event.node.tree;
+    Node parent = event.node.parent!;
     if (event.node.order > 1) {
       Node nodeToSwap = parent.getNodeByOrder(event.node.order - 1);
 
@@ -258,7 +253,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
         event.node.order -= 1;
         parent.sortNodes();
         numberNodes();
-        emit(NodeSelectedState(trees, event.node.id));
+        emit(NodeSelectedState(trees, event.node));
       } else {
         emit(ErrorState('Failed to move node up'));
       }
@@ -269,7 +264,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     MoveNodeDownEvent event,
     Emitter<NodeState> emit,
   ) async {
-    dynamic parent = event.node.parent ?? event.node.tree;
+    Node parent = event.node.parent!;
     if (event.node.order < parent.children.length) {
       Node nodeToSwap = parent.getNodeByOrder(event.node.order + 1);
 
@@ -284,7 +279,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
         event.node.order += 1;
         parent.sortNodes();
         numberNodes();
-        emit(NodeSelectedState(trees, event.node.id));
+        emit(NodeSelectedState(trees, event.node));
       } else {
         emit(ErrorState('Failed to move node down'));
       }
@@ -307,33 +302,50 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     }
   }
 
-  void _updateNodeOrders(dynamic parent) {
-    int order = 1;
-    for (var node in parent.getChildren()) {
-      node.order = order++;
+  void _updateNodeOrders(Node parent) {
+    // int order = 1;
+    // for (var node in parent.getChildren()) {
+    //   node.order = order++;
+    // }
+    Map<String, int> orderMap = {};
+
+    for (var i = 1; i <= parent.children.length; i++) {
+      if (!(parent.children[i - 1].order == i)) {
+        parent.children[i - 1].order = i;
+        orderMap[(parent.children[i - 1].id).toString()] = i;
+      }
     }
+
+    print(orderMap);
+
+    httpService.httpSetNodeOrder(orderMap);
   }
 
   FutureOr<void> _onAddNodeEvent(
     AddNodeEvent event,
     Emitter<NodeState> emit,
   ) async {
-    var order = event.tree.rootNode.children.length + 1;
-    final response =
-        await httpService.httpAddNode(event.tree, event.text, order);
+    var order = event.under.children.length + 1;
+    final response = await httpService.httpAddNode(
+        event.under, event.tree, event.text, order);
     if (response.statusCode == 201) {
       var serializedResponse = jsonDecode(response.body);
-      event.tree.rootNode.children.add(Node(
+      var new_node = Node(
           id: serializedResponse['id'],
-          text: serializedResponse['text'],
+          text: event.text,
           // type: serializedResponse['type'],
           forwardNodeAssociations: [],
           children: [],
           order: order,
-          tree: event.tree));
-      event.tree.sortNodes();
+          parent: event.under);
+      if (event.under.parent != null) {
+        event.under.parent!.children.add(new_node);
+      } else {
+        event.under.children.add(new_node);
+      }
+      event.under.sortNodes();
       numberNodes();
-      emit(TreesNumberedState(trees));
+      emit(NodeSelectedState(trees, new_node));
     } else {
       print(response.body);
       emit(ErrorState('Failed to add node'));
@@ -367,6 +379,11 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
         _numberNodesRecursive(currentNode.children, currentNode.number);
       }
     }
+  }
+
+  FutureOr<void> _onDeselectNode(
+      DeselectNodeEvent event, Emitter<NodeState> emit) {
+    emit(TreesNumberedState(trees));
   }
 }
 

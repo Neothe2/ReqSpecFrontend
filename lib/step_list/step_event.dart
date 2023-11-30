@@ -11,9 +11,11 @@ class NumberNodesEvent extends TreeEvent {
   NumberNodesEvent(this.trees);
 }
 
+class DeselectNodeEvent extends TreeEvent {}
+
 class SelectNodeEvent extends TreeEvent {
-  final int nodeId;
-  SelectNodeEvent(this.nodeId);
+  final Node node;
+  SelectNodeEvent(this.node);
 }
 
 // Event triggered when the user wants to edit a node
@@ -56,7 +58,8 @@ class DeleteNodeEvent extends TreeEvent {
 
 class AddNodeEvent extends TreeEvent {
   final String text;
+  final Node under;
   final Tree tree;
 
-  AddNodeEvent(this.text, this.tree);
+  AddNodeEvent(this.text, this.under, this.tree);
 }

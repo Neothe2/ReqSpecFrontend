@@ -10,16 +10,11 @@ class TreeHttpProvider {
   var nodesRoute = '/nodes';
 
   Future<http.Response> httpIndentNodeBackward(
-      Node node, dynamic newParent, bool newParentIsTree) async {
-    var requestBody = newParentIsTree
-        ? {
-            "parent": null,
-            "id": node.id,
-          }
-        : {
-            "parent": newParent.id,
-            "id": node.id,
-          };
+      Node node, dynamic newParent) async {
+    var requestBody = {
+      "parent": newParent.id,
+      "id": node.id,
+    };
 
     return await http.patch(Uri.parse('${url}/reqspec/nodes/${node.id}/'),
         headers: {"Content-Type": "application/json"},
@@ -55,7 +50,12 @@ class TreeHttpProvider {
     return await http.delete(Uri.parse('${url}/nodes/${node.id}/'));
   }
 
-  Future<http.Response> httpAddNode(Tree tree, String text, int order) async {
+  Future<http.Response> httpAddNode(
+      Node under, Tree tree, String text, int order) async {
+    // Tree tree;
+    // while (true) {
+    //   if (under.parent)
+    // }
     return await http.post(Uri.parse('${url}/trees/${tree.id}/create_node/'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"text": text, "order": order}));
@@ -68,7 +68,7 @@ class TreeHttpProvider {
   }
 }
 
-class StepHttpProvidor extends TreeHttpProvider {
+class StepHttpProvider extends TreeHttpProvider {
   @override
   var url = 'http://10.0.2.2:8000/reqspec';
   @override
@@ -78,16 +78,11 @@ class StepHttpProvidor extends TreeHttpProvider {
 
   @override
   Future<http.Response> httpIndentNodeBackward(
-      Node node, dynamic newParent, bool newParentIsTree) async {
-    var requestBody = newParentIsTree
-        ? {
-            "parent": null,
-            "id": node.id,
-          }
-        : {
-            "parent": newParent.id,
-            "id": node.id,
-          };
+      Node node, dynamic newParent) async {
+    var requestBody = {
+      "parent": newParent.id,
+      "id": node.id,
+    };
     print('Syke');
 
     return await http.patch(Uri.parse('${url + nodesRoute}/${node.id}/'),
@@ -111,7 +106,6 @@ class StepHttpProvidor extends TreeHttpProvider {
   @override
   Future<http.Response> httpLoadTrees() async {
     print('Syke');
-    //TODO remove the type attribute from the tree model
     return await http.get(Uri.parse('${url + treesRoute}/'));
   }
 
@@ -137,15 +131,29 @@ class StepHttpProvidor extends TreeHttpProvider {
   }
 
   @override
-  Future<http.Response> httpAddNode(Tree tree, String text, int order) async {
-    print('Syke');
-    return await http.post(
-        Uri.parse('${url + treesRoute}/${tree.id}/add_node/'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "under": tree.rootNode.id,
-          "node": {"data": text, "order": order}
-        }));
+  Future<http.Response> httpAddNode(
+      Node under, Tree tree, String text, int order) async {
+    // print(jsonEncode({
+    //   "under": under.parent!.id,
+    //   "node": {"data": text, "order": order}
+    // }));
+    if (under.parent != null) {
+      return await http.post(
+          Uri.parse('${url + treesRoute}/${tree.id}/add_node/'),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "under": under.parent!.id,
+            "node": {"data": text, "order": order}
+          }));
+    } else {
+      return await http.post(
+          Uri.parse('${url + treesRoute}/${tree.id}/add_node/'),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "under": under.id,
+            "node": {"data": text, "order": order}
+          }));
+    }
   }
 
   @override
@@ -155,4 +163,14 @@ class StepHttpProvidor extends TreeHttpProvider {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(orderMap));
   }
+}
+
+class AlternateFlowHttpProvidor extends StepHttpProvider {
+  @override
+  // TODO: implement treesRoute
+  String get treesRoute => '/alternate_flows';
+
+  @override
+  // TODO: implement nodesRoute
+  String get nodesRoute => '/alternate_flow_steps';
 }

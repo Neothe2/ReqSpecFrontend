@@ -29,7 +29,7 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var text = 'WHATEVER YOU DO, DO NOT CLICK THIS BUTTON';
+    var text = 'Add alternate flows';
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -41,8 +41,8 @@ class MyHomePage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              SystemNavigator.pop();
-              throw Exception('FUCK YOU!');
+              // SystemNavigator.pop();
+              // throw Exception('FUCK YOU!');
             },
             child: Text(text),
             style: ButtonStyle(

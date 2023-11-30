@@ -25,9 +25,9 @@ class ErrorState extends NodeState {
 
 class NodeSelectedState extends NodeState {
   final List<Tree> trees;
-  final int selectedNodeId;
+  final Node selectedNode;
 
-  NodeSelectedState(this.trees, this.selectedNodeId);
+  NodeSelectedState(this.trees, this.selectedNode);
 }
 
 class EditingNodeState extends NodeState {

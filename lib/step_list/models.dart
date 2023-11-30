@@ -276,15 +276,15 @@ Node parseNode(Map<String, dynamic> nodeJson, Node? parent, Tree? tree) {
     text: nodeJson['data'],
     // type: nodeJson['type'],
     parent: parent,
-    forwardNodeAssociations:
-        List<int>.from(nodeJson['forward_node_associations']),
+    forwardNodeAssociations: List<int>.from(nodeJson['forward_associations']),
     children: [],
     tree: tree,
-    order: nodeJson['order'],
+    order: nodeJson['order'] ?? 0,
   );
   node.children = (nodeJson['children'] as List)
       .map((childJson) => parseNode(childJson, node, tree))
       .toList();
+  node.sortNodes();
 
   return node;
 }

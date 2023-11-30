@@ -19,7 +19,7 @@ class NodeListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Create a unique BlocProvider for each StepListWidget
     return BlocProvider<NodeBloc>(
-      create: (_) => NodeBloc(TreeHttpProvider())..add(LoadTreesEvent()),
+      create: (_) => NodeBloc(StepHttpProvider())..add(LoadTreesEvent()),
       child: NodeListWidget(treeId: treeId),
     );
   }
@@ -51,9 +51,9 @@ class NodeListWidget extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isSelected) {
-          context.read<NodeBloc>().add(SelectNodeEvent(-1)); // Deselect
+          context.read<NodeBloc>().add(DeselectNodeEvent()); // Deselect
         } else {
-          context.read<NodeBloc>().add(SelectNodeEvent(node.id)); // Select
+          context.read<NodeBloc>().add(SelectNodeEvent(node)); // Select
         }
       },
       child: Card(
@@ -211,7 +211,7 @@ class NodeListWidget extends StatelessWidget {
           var selectedNodeId = -1;
           var isEditing = false;
           if (state is NodeSelectedState) {
-            selectedNodeId = (state as dynamic).selectedNodeId;
+            selectedNodeId = (state as dynamic).selectedNode.id;
           }
           if (state is EditingNodeState) {
             selectedNodeId = state.editingNodeId;
@@ -263,9 +263,12 @@ class NodeListWidget extends StatelessWidget {
                       onPressed: () async {
                         String? newText = await addNodeModal(context);
                         if (newText != null) {
-                          context
-                              .read<NodeBloc>()
-                              .add(AddNodeEvent(newText, tree));
+                          context.read<NodeBloc>().add(AddNodeEvent(
+                              newText,
+                              (state is NodeSelectedState)
+                                  ? state.selectedNode
+                                  : tree.rootNode,
+                              tree));
                         }
                       },
                     ),
