@@ -326,7 +326,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
       event.tree.rootNode.children.add(Node(
           id: serializedResponse['id'],
           text: serializedResponse['text'],
-          type: serializedResponse['type'],
+          // type: serializedResponse['type'],
           forwardNodeAssociations: [],
           children: [],
           order: order,

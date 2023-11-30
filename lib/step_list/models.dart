@@ -155,10 +155,10 @@ List<ReqStep> parseSteps(List stepsJson, ReqStep? parent, Flow flow) {
 
 class Tree {
   int id;
-  String type; // MAIN, ALTERNATE, EXCEPTION
+  // String type; // MAIN, ALTERNATE, EXCEPTION
   Node rootNode;
 
-  Tree({required this.id, required this.type, required this.rootNode});
+  Tree({required this.id, required this.rootNode});
 
   Node? getNodeByOrder(int order) {
     // Recursive function to find the node by order
@@ -190,7 +190,7 @@ class Tree {
 class Node {
   int id;
   String text;
-  String type;
+  // String type;
   Node? parent;
   List<int> forwardNodeAssociations;
   List<Node> children;
@@ -201,7 +201,7 @@ class Node {
   Node({
     required this.id,
     required this.text,
-    required this.type,
+    // required this.type,
     this.parent,
     required this.forwardNodeAssociations,
     required this.children,
@@ -261,7 +261,7 @@ List<Tree> parseTreesFromJson(String jsonString) {
 
     Tree tree = Tree(
       id: treeJson['id'],
-      type: treeJson['type'],
+      // type: treeJson['type'],
       rootNode: rootNode,
     );
     trees.add(tree);
@@ -274,7 +274,7 @@ Node parseNode(Map<String, dynamic> nodeJson, Node? parent, Tree? tree) {
   Node node = Node(
     id: nodeJson['id'],
     text: nodeJson['data'],
-    type: nodeJson['type'],
+    // type: nodeJson['type'],
     parent: parent,
     forwardNodeAssociations:
         List<int>.from(nodeJson['forward_node_associations']),

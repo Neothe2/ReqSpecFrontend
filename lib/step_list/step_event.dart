@@ -55,9 +55,8 @@ class DeleteNodeEvent extends TreeEvent {
 }
 
 class AddNodeEvent extends TreeEvent {
-  final String type;
   final String text;
   final Tree tree;
 
-  AddNodeEvent(this.type, this.text, this.tree);
+  AddNodeEvent(this.text, this.tree);
 }

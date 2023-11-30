@@ -218,7 +218,7 @@ class NodeListWidget extends StatelessWidget {
             isEditing = true;
           }
 
-          var treeType = convertWord(tree.type);
+          // var treeType = convertWord(tree.type);
 
           return Card(
             margin: EdgeInsets.all(10.0),
@@ -239,7 +239,7 @@ class NodeListWidget extends StatelessWidget {
                     children: [
                       ListTile(
                         title: Text(
-                          treeType,
+                          'Flow',
                           style: TextStyle(
                             fontWeight: FontWeight.bold, // Bold title
                             fontSize: 18,
@@ -265,7 +265,7 @@ class NodeListWidget extends StatelessWidget {
                         if (newText != null) {
                           context
                               .read<NodeBloc>()
-                              .add(AddNodeEvent(tree.type, newText, tree));
+                              .add(AddNodeEvent(newText, tree));
                         }
                       },
                     ),
