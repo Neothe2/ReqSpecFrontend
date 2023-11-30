@@ -15,8 +15,8 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
   List<Tree> trees = [];
   var url = 'http://192.168.0.4:8000/reqspec';
   late TreeHttpProvider httpService;
-  NodeBloc() : super(InitialNodeState()) {
-    this.httpService = TreeHttpProvider();
+  NodeBloc(this.httpService) : super(InitialNodeState()) {
+    // this.httpService = TreeHttpProvider();
     on<LoadTreesEvent>(_onLoadTreesEvent);
     on<NumberNodesEvent>(_onNumberNodesEvent);
     on<SelectNodeEvent>(_onNodeSelectedEvent);
@@ -94,10 +94,10 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
       //     orderMap[(newParent.getChildren()[i - 1].id).toString()] = i;
       //   }
       // }
-      for (var i = 1; i <= parent.getChildren().length; i++) {
-        if (!(parent.getChildren()[i - 1].order == i)) {
-          parent.getChildren()[i - 1].order = i;
-          orderMap[(parent.getChildren()[i - 1].id).toString()] = i;
+      for (var i = 1; i <= parent.children.length; i++) {
+        if (!(parent.children[i - 1].order == i)) {
+          parent.children[i - 1].order = i;
+          orderMap[(parent.children[i - 1].id).toString()] = i;
         }
       }
 
@@ -196,7 +196,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     Emitter<NodeState> emit,
   ) {
     for (var tree in trees) {
-      _numberNodesRecursive(tree.children);
+      _numberNodesRecursive(tree.rootNode.children);
     }
     emit(TreesNumberedState(trees));
   }
@@ -318,12 +318,12 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     AddNodeEvent event,
     Emitter<NodeState> emit,
   ) async {
-    var order = event.tree.children.length + 1;
+    var order = event.tree.rootNode.children.length + 1;
     final response =
         await httpService.httpAddNode(event.tree, event.text, order);
     if (response.statusCode == 201) {
       var serializedResponse = jsonDecode(response.body);
-      event.tree.children.add(Node(
+      event.tree.rootNode.children.add(Node(
           id: serializedResponse['id'],
           text: serializedResponse['text'],
           type: serializedResponse['type'],
@@ -354,7 +354,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
 
   void numberNodes() {
     for (var tree in trees) {
-      _numberNodesRecursive(tree.children);
+      _numberNodesRecursive(tree.rootNode.children);
     }
   }
 

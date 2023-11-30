@@ -19,7 +19,7 @@ class NodeListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Create a unique BlocProvider for each StepListWidget
     return BlocProvider<NodeBloc>(
-      create: (_) => NodeBloc()..add(LoadTreesEvent()),
+      create: (_) => NodeBloc(TreeHttpProvider())..add(LoadTreesEvent()),
       child: NodeListWidget(treeId: treeId),
     );
   }
@@ -312,9 +312,9 @@ class NodeListWidget extends StatelessWidget {
   }
 
   getAllNodes(reqspec_models.Tree tree) {
-    print(tree.children);
+    print(tree.rootNode.children);
     List<Node> nodeList = [];
-    for (var child in tree.children) {
+    for (var child in tree.rootNode.children) {
       _getAllNodes(child, nodeList);
     }
     return nodeList;

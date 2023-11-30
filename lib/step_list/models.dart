@@ -156,47 +156,34 @@ List<ReqStep> parseSteps(List stepsJson, ReqStep? parent, Flow flow) {
 class Tree {
   int id;
   String type; // MAIN, ALTERNATE, EXCEPTION
-  List<Node> children;
+  Node rootNode;
 
-  Tree({required this.type, required this.children, required this.id});
+  Tree({required this.id, required this.type, required this.rootNode});
 
-  getNodeByOrder(int order) {
-    for (var node in children) {
-      if (node.order == order) {
-        return node;
+  Node? getNodeByOrder(int order) {
+    // Recursive function to find the node by order
+    Node? searchNode(Node node, int order) {
+      if (node.order == order) return node;
+      for (var child in node.children) {
+        var result = searchNode(child, order);
+        if (result != null) return result;
+      }
+      return null;
+    }
+
+    return searchNode(rootNode, order);
+  }
+
+  void sortNodes() {
+    // Recursive function to sort nodes
+    void sortNodeChildren(Node node) {
+      node.children.sort((a, b) => a.order.compareTo(b.order));
+      for (var child in node.children) {
+        sortNodeChildren(child);
       }
     }
-    return null;
-  }
 
-  sortNodes() {
-    children.sort((a, b) => a.order.compareTo(b.order));
-  }
-
-  getChildrenLength() {
-    return children.length;
-  }
-
-  getChildren() {
-    return children;
-  }
-
-  removeChild(Node node) {
-    children.remove(node);
-  }
-
-  addAsChild(Node node) {
-    var parent;
-    if (node.parent == null) {
-      parent = node.tree;
-    } else {
-      parent = node.parent;
-    }
-
-    node.tree = this;
-    parent.removeChild(node);
-    children.add(node);
-    node.parent = null;
+    sortNodeChildren(rootNode);
   }
 }
 
@@ -207,7 +194,7 @@ class Node {
   Node? parent;
   List<int> forwardNodeAssociations;
   List<Node> children;
-  Tree? tree; // Changed to Flow?
+  Tree? tree;
   String number;
   int order;
 
@@ -218,7 +205,7 @@ class Node {
     this.parent,
     required this.forwardNodeAssociations,
     required this.children,
-    this.tree, // Changed to Flow?
+    this.tree,
     this.number = '',
     required this.order,
   });
@@ -268,38 +255,36 @@ List<Tree> parseTreesFromJson(String jsonString) {
   List<Tree> trees = [];
 
   for (var treeJson in jsonData) {
-    Tree tree = Tree(type: treeJson['type'], children: [], id: treeJson['id']);
-    tree.children =
-        parseNodes(treeJson['children'], null, tree); // Pass the tree object
+    // Assuming the root node is included in the JSON
+    var rootNodeJson = treeJson['root_node'];
+    Node rootNode = parseNode(rootNodeJson, null, null);
+
+    Tree tree = Tree(
+      id: treeJson['id'],
+      type: treeJson['type'],
+      rootNode: rootNode,
+    );
     trees.add(tree);
   }
 
   return trees;
 }
 
-List<Node> parseNodes(List nodesJson, Node? parent, Tree tree) {
-  List<Node> nodes = [];
-  for (var nodeJson in nodesJson) {
-    Node node = Node(
-      id: nodeJson['id'],
-      text: nodeJson['text'],
-      type: nodeJson['type'],
-      parent: parent,
-      forwardNodeAssociations:
-          List<int>.from(nodeJson['forward_node_associations']),
-      children: [],
-      tree: tree, // Assign the flow object
-      order: nodeJson['order'],
-    );
+Node parseNode(Map<String, dynamic> nodeJson, Node? parent, Tree? tree) {
+  Node node = Node(
+    id: nodeJson['id'],
+    text: nodeJson['data'],
+    type: nodeJson['type'],
+    parent: parent,
+    forwardNodeAssociations:
+        List<int>.from(nodeJson['forward_node_associations']),
+    children: [],
+    tree: tree,
+    order: nodeJson['order'],
+  );
+  node.children = (nodeJson['children'] as List)
+      .map((childJson) => parseNode(childJson, node, tree))
+      .toList();
 
-    if (nodeJson['children'] != null && nodeJson['children'].isNotEmpty) {
-      node.children =
-          parseNodes(nodeJson['children'], node, tree); // Pass the flow object
-    }
-
-    nodes.add(node);
-  }
-
-  nodes.sort((a, b) => a.order.compareTo(b.order));
-  return nodes;
+  return node;
 }

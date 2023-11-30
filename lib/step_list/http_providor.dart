@@ -14,15 +14,11 @@ class TreeHttpProvider {
     var requestBody = newParentIsTree
         ? {
             "parent": null,
-            "tree": newParent.id,
             "id": node.id,
-            "type": node.type
           }
         : {
             "parent": newParent.id,
-            "tree": null,
             "id": node.id,
-            "type": node.type
           };
 
     return await http.patch(Uri.parse('${url}/reqspec/nodes/${node.id}/'),
@@ -33,9 +29,7 @@ class TreeHttpProvider {
   Future<http.Response> httpIndentNodeForward(Node node, Node newParent) async {
     var requestBody = {
       "parent": newParent.id,
-      "tree": null,
       "id": node.id,
-      "type": node.type
     };
 
     return await http.patch(Uri.parse('${url}/reqspec/nodes/${node.id}/'),
@@ -74,13 +68,13 @@ class TreeHttpProvider {
   }
 }
 
-class DummyHttpProvider extends TreeHttpProvider {
+class StepHttpProvidor extends TreeHttpProvider {
   @override
-  var url = 'http://192.168.0.4:8000/reqspec';
+  var url = 'http://10.0.2.2:8000/reqspec';
   @override
-  var treesRoute = '/trees';
+  var treesRoute = '/main_flows';
   @override
-  var nodesRoute = '/nodes';
+  var nodesRoute = '/main_flow_steps';
 
   @override
   Future<http.Response> httpIndentNodeBackward(
@@ -88,19 +82,15 @@ class DummyHttpProvider extends TreeHttpProvider {
     var requestBody = newParentIsTree
         ? {
             "parent": null,
-            "tree": newParent.id,
             "id": node.id,
-            "type": node.type
           }
         : {
             "parent": newParent.id,
-            "tree": null,
             "id": node.id,
-            "type": node.type
           };
     print('Syke');
 
-    return await http.patch(Uri.parse('${url}/reqspec/nodes/${node.id}/'),
+    return await http.patch(Uri.parse('${url + nodesRoute}/${node.id}/'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(requestBody));
   }
@@ -109,13 +99,11 @@ class DummyHttpProvider extends TreeHttpProvider {
   Future<http.Response> httpIndentNodeForward(Node node, Node newParent) async {
     var requestBody = {
       "parent": newParent.id,
-      "tree": null,
       "id": node.id,
-      "type": node.type
     };
 
     print('Syke');
-    return await http.patch(Uri.parse('${url}/reqspec/nodes/${node.id}/'),
+    return await http.patch(Uri.parse('${url + nodesRoute}/${node.id}/'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(requestBody));
   }
@@ -123,41 +111,47 @@ class DummyHttpProvider extends TreeHttpProvider {
   @override
   Future<http.Response> httpLoadTrees() async {
     print('Syke');
-    return await http.get(Uri.parse('${url}/trees/'));
+    //TODO remove the type attribute from the tree model
+    return await http.get(Uri.parse('${url + treesRoute}/'));
   }
 
   @override
   Future<http.Response> httpUpdateNodeText(Node node, String newText) async {
+    //TODO change the parsing logic to turn "data" into "text"
     print('Syke');
-    return await http
-        .patch(Uri.parse('${url}/nodes/${node.id}/'), body: {"text": newText});
+    return await http.patch(Uri.parse('${url + nodesRoute}/${node.id}/'),
+        body: {"data": newText});
   }
 
   @override
   Future<http.Response> httpMoveNode(Node node, int newOrder) async {
     print('Syke');
-    return await http.patch(Uri.parse('${url}/nodes/${node.id}/'),
+    return await http.patch(Uri.parse('${url + nodesRoute}/${node.id}/'),
         body: {'order': newOrder.toString()});
   }
 
   @override
   Future<http.Response> httpDeleteNode(Node node) async {
     print('Syke');
-    return await http.delete(Uri.parse('${url}/nodes/${node.id}/'));
+    return await http.delete(Uri.parse('${url + nodesRoute}/${node.id}/'));
   }
 
   @override
   Future<http.Response> httpAddNode(Tree tree, String text, int order) async {
     print('Syke');
-    return await http.post(Uri.parse('${url}/trees/${tree.id}/create_node/'),
+    return await http.post(
+        Uri.parse('${url + treesRoute}/${tree.id}/add_node/'),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"text": text, "order": order}));
+        body: jsonEncode({
+          "under": tree.rootNode.id,
+          "node": {"data": text, "order": order}
+        }));
   }
 
   @override
   Future<http.Response> httpSetNodeOrder(Map<String, int> orderMap) async {
     print('Syke');
-    return await http.post(Uri.parse('${url}/nodes/set_order/'),
+    return await http.post(Uri.parse('${url + nodesRoute}/set_order/'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(orderMap));
   }
