@@ -43,6 +43,17 @@ class _MyHomePageState extends State<MyHomePage> {
   dynamic use_case_description = {};
   bool treesFetched = false;
 
+  void scrollToNode(int nodeId) {
+    final GlobalKey key = exception_flows[0].nodeListWidget.nodeKeys[nodeId]!;
+
+    // Check if the context for the key is available
+    if (key.currentContext != null) {
+      // Scroll to the position of the key
+      Scrollable.ensureVisible(key.currentContext!,
+          duration: Duration(milliseconds: 50000));
+    }
+  }
+
   getTrees(int use_case_description_id) async {
     var response = await http.get(Uri.parse(
         'http://10.0.2.2:8000/reqspec/use_case_descriptions/$use_case_description_id'));
@@ -65,6 +76,9 @@ class _MyHomePageState extends State<MyHomePage> {
       treeId: serializedData['main_flow'], // Replace with your first flowId
       httpProvider: StepHttpProvider(),
     );
+    main_flow.associationStream.listen((event) {
+      print(event);
+    });
 
     setState(() {
       treesFetched = true;
@@ -88,6 +102,16 @@ class _MyHomePageState extends State<MyHomePage> {
       body: ListView(
         children: treesFetched
             ? <Widget>[
+                TextButton(
+                  onPressed: () {
+                    scrollToNode(32);
+                  },
+                  child: Text('SCROOOOOL!!!'),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(Colors.yellow),
+                    foregroundColor: MaterialStatePropertyAll(Colors.black),
+                  ),
+                ),
                 main_flow,
                 TextButton(
                   onPressed: () async {

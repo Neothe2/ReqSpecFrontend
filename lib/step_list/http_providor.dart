@@ -66,6 +66,10 @@ class TreeHttpProvider {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(orderMap));
   }
+
+  Future<http.Response> getTreeid(int nodeId) async {
+    return http.get(Uri.parse('${url + nodesRoute}/${nodeId}/'));
+  }
 }
 
 class StepHttpProvider extends TreeHttpProvider {

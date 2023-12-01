@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reqspec/step_list/http_providor.dart';
@@ -10,27 +13,52 @@ import 'models.dart' as reqspec_models;
 class NodeListPage extends StatelessWidget {
   final int treeId;
   late TreeHttpProvider httpProvider;
+  late NodeListWidget nodeListWidget;
+  final StreamController<String> associationStreamController =
+      StreamController<String>();
 
   NodeListPage({Key? key, required this.treeId, required this.httpProvider})
       : super(key: key);
 
+  // Expose the stream so that parent widgets can listen to the association events.
+  Stream<String> get associationStream => associationStreamController.stream;
+
   @override
   Widget build(BuildContext context) {
-    // Create a unique BlocProvider for each StepListWidget
+    // Pass the associationStreamController to NodeListWidget
+    NodeListWidget nodeListWidget = NodeListWidget(
+      treeId: treeId,
+      associationStreamController: associationStreamController,
+    );
+
+    // No need to listen here, because the StreamController is passed down
+    // and the parent can listen to it directly
+
     return BlocProvider<NodeBloc>(
       create: (_) => NodeBloc(httpProvider)..add(LoadTreesEvent()),
-      child: NodeListWidget(treeId: treeId),
+      child: nodeListWidget,
     );
+  }
+
+  // Make sure to close the stream controller when the widget is disposed
+  void dispose() {
+    associationStreamController.close();
   }
 }
 
 class NodeListWidget extends StatelessWidget {
   final List<Node>? nodes;
   final int treeId;
-  const NodeListWidget({
+  final Map<int, GlobalKey> nodeKeys = {}; // Store keys for each node
+  final StreamController<String> associationStreamController;
+  // Add a getter to expose the stream.
+  Stream<String> get associationStream => associationStreamController.stream;
+
+  NodeListWidget({
     Key? key,
     required this.treeId,
     this.nodes,
+    required this.associationStreamController,
   }) : super(key: key);
 
   @override
@@ -40,9 +68,9 @@ class NodeListWidget extends StatelessWidget {
     return buildNodesFromBloc(context);
   }
 
-  void _showAssociationsModal(
-      BuildContext context, List<int> forwardAssociations) {
-    showModalBottomSheet(
+  Future<int?> _showAssociationsModal(
+      BuildContext context, List<int> forwardAssociations) async {
+    final result = await showModalBottomSheet<int>(
       context: context,
       builder: (BuildContext context) {
         return Container(
@@ -53,13 +81,11 @@ class NodeListWidget extends StatelessWidget {
               itemCount: forwardAssociations.length,
               itemBuilder: (BuildContext context, int index) {
                 int associatedNodeId = forwardAssociations[index];
-                // You might want to replace this with a method to get the node's
-                // details (like text) using the associated node ID
                 return ListTile(
                   title: Text('Node ID: $associatedNodeId'),
                   onTap: () {
-                    // TODO: Implement what happens when you tap an association
-                    // For example, navigate to a node detail page
+                    Navigator.pop(
+                        context, associatedNodeId); // Return the number
                   },
                 );
               },
@@ -68,6 +94,9 @@ class NodeListWidget extends StatelessWidget {
         );
       },
     );
+
+    // Handle the result
+    return result;
   }
 
   Widget buildNodeCard(
@@ -76,8 +105,11 @@ class NodeListWidget extends StatelessWidget {
     BuildContext context,
     bool isEditing,
   ) {
+    nodeKeys[node.id] = GlobalKey();
+
     var editingText = '';
     return GestureDetector(
+      key: nodeKeys[node.id],
       onTap: () {
         if (isSelected) {
           context.read<NodeBloc>().add(DeselectNodeEvent()); // Deselect
@@ -145,9 +177,19 @@ class NodeListWidget extends StatelessWidget {
                   children: [
                     // Use TextButton for a more flat and left-aligned appearance
                     TextButton(
-                      onPressed: () {
-                        _showAssociationsModal(
+                      onPressed: () async {
+                        var id = await _showAssociationsModal(
                             context, node.forwardNodeAssociations);
+                        print('skjfal;skdjf;laksjdf;laksjdf');
+                        if (id != null) {
+                          // Add an event to the stream when an association is tapped.
+                          var response =
+                              await context.read<NodeBloc>().getTreeOfNode(id);
+                          var serializedResponse = jsonDecode(response.body);
+                          print(serializedResponse['tree_id']);
+                          this.associationStreamController.add(
+                              'The node with id: $id has been tapped and the tree_if of that node is ${serializedResponse['tree_id']}');
+                        }
                       },
                       child: Text('Linked to'),
                       style: TextButton.styleFrom(
@@ -160,9 +202,19 @@ class NodeListWidget extends StatelessWidget {
                     ),
                     SizedBox(width: 8), // Spacing between buttons
                     TextButton(
-                      onPressed: () {
-                        _showAssociationsModal(
+                      onPressed: () async {
+                        var id = await _showAssociationsModal(
                             context, node.backwardNodeAssociations);
+                        print('skjfal;skdjf;laksjdf;laksjdf');
+                        if (id != null) {
+                          // Add an event to the stream when an association is tapped.
+                          var response =
+                              await context.read<NodeBloc>().getTreeOfNode(id);
+                          var serializedResponse = jsonDecode(response.body);
+                          print(serializedResponse['tree_id']);
+                          this.associationStreamController.add(
+                              'The node with id: $id has been tapped and the tree_if of that node is ${serializedResponse['tree_id']}');
+                        }
                       },
                       child: Text('Linked from'),
                       style: TextButton.styleFrom(

@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
-// import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as http;
 import 'http_providor.dart';
 import 'models.dart';
 
@@ -351,6 +351,10 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
       print(response.body);
       emit(ErrorState('Failed to add node'));
     }
+  }
+
+  Future<http.Response> getTreeOfNode(int nodeId) async {
+    return await httpService.getTreeid(nodeId);
   }
 
   // Future<List<Tree>> _fetchTrees() async {
