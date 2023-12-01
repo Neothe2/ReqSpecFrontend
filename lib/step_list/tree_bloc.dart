@@ -335,6 +335,7 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
           text: event.text,
           // type: serializedResponse['type'],
           forwardNodeAssociations: [],
+          backwardNodeAssociations: [],
           children: [],
           order: order,
           parent: event.under);

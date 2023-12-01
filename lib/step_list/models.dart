@@ -193,6 +193,7 @@ class Node {
   // String type;
   Node? parent;
   List<int> forwardNodeAssociations;
+  List<int> backwardNodeAssociations;
   List<Node> children;
   Tree? tree;
   String number;
@@ -204,6 +205,7 @@ class Node {
     // required this.type,
     this.parent,
     required this.forwardNodeAssociations,
+    required this.backwardNodeAssociations,
     required this.children,
     this.tree,
     this.number = '',
@@ -277,6 +279,7 @@ Node parseNode(Map<String, dynamic> nodeJson, Node? parent, Tree? tree) {
     // type: nodeJson['type'],
     parent: parent,
     forwardNodeAssociations: List<int>.from(nodeJson['forward_associations']),
+    backwardNodeAssociations: List<int>.from(nodeJson['backward_associations']),
     children: [],
     tree: tree,
     order: nodeJson['order'] ?? 0,

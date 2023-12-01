@@ -40,6 +40,36 @@ class NodeListWidget extends StatelessWidget {
     return buildNodesFromBloc(context);
   }
 
+  void _showAssociationsModal(
+      BuildContext context, List<int> forwardAssociations) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 200, // Adjust the height as needed
+          color: Colors.white,
+          child: Center(
+            child: ListView.builder(
+              itemCount: forwardAssociations.length,
+              itemBuilder: (BuildContext context, int index) {
+                int associatedNodeId = forwardAssociations[index];
+                // You might want to replace this with a method to get the node's
+                // details (like text) using the associated node ID
+                return ListTile(
+                  title: Text('Node ID: $associatedNodeId'),
+                  onTap: () {
+                    // TODO: Implement what happens when you tap an association
+                    // For example, navigate to a node detail page
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget buildNodeCard(
     Node node,
     bool isSelected,
@@ -106,6 +136,46 @@ class NodeListWidget extends StatelessWidget {
                   : null,
             ),
             // Submenu appears as a row of icon buttons when the item is selected
+            if (isSelected)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment:
+                      MainAxisAlignment.start, // Align to the start (left)
+                  children: [
+                    // Use TextButton for a more flat and left-aligned appearance
+                    TextButton(
+                      onPressed: () {
+                        _showAssociationsModal(
+                            context, node.forwardNodeAssociations);
+                      },
+                      child: Text('Linked to'),
+                      style: TextButton.styleFrom(
+                        primary: Colors.lightBlue, // Text Color
+                        backgroundColor:
+                            Colors.white, // Button background color
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.0), // Button padding
+                      ),
+                    ),
+                    SizedBox(width: 8), // Spacing between buttons
+                    TextButton(
+                      onPressed: () {
+                        _showAssociationsModal(
+                            context, node.backwardNodeAssociations);
+                      },
+                      child: Text('Linked from'),
+                      style: TextButton.styleFrom(
+                        primary: Colors.lightBlue, // Text Color
+                        backgroundColor:
+                            Colors.white, // Button background color
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.0), // Button padding
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             if (isSelected)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -185,6 +255,7 @@ class NodeListWidget extends StatelessWidget {
                   ),
                 ),
               ),
+
             // ... existing submenu icons
           ],
         ),
