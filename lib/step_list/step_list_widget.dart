@@ -48,13 +48,14 @@ class NodeListPage extends StatelessWidget {
 }
 
 class NodeListWidget extends StatelessWidget {
-  final List<Node>? nodes;
+  List<Node>? nodes;
   final int treeId;
   final Map<int, GlobalKey> nodeKeys = {}; // Store keys for each node
   final StreamController<Map<String, dynamic>> associationStreamController;
   // Add a getter to expose the stream.
   Stream<Map<String, dynamic>> get associationStream =>
       associationStreamController.stream;
+  late BuildContext context;
 
   NodeListWidget({
     Key? key,
@@ -67,6 +68,7 @@ class NodeListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     // If steps are provided, build the UI from the provided steps
     // Otherwise, build the UI from the steps in the current state
+    this.context = context;
     return buildNodesFromBloc(context);
   }
 
@@ -98,6 +100,15 @@ class NodeListWidget extends StatelessWidget {
 
     // Handle the result
     return result;
+  }
+
+  void selectNode(int nodeId) {
+    context.read<NodeBloc>().add(SelectNodeEvent(
+        this.nodes!.firstWhere((element) => element.id == nodeId)));
+  }
+
+  void deselectNode() {
+    context.read<NodeBloc>().add(DeselectNodeEvent());
   }
 
   Widget buildNodeCard(
@@ -338,7 +349,8 @@ class NodeListWidget extends StatelessWidget {
           //     : (state as treesNumberedState).trees.first.steps;
           reqspec_models.Tree tree =
               gettreeById((state as dynamic).trees, treeId);
-          final nodes = getAllNodes(tree);
+          var nodes = getAllNodes(tree);
+          this.nodes = nodes;
           var selectedNodeId = -1;
           var isEditing = false;
           if (state is NodeSelectedState) {

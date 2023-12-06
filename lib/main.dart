@@ -67,6 +67,13 @@ class _MyHomePageState extends State<MyHomePage> {
       );
       alternate_flows.add(nodeListPage);
       flow_map[alternateFlowId] = nodeListPage;
+      nodeListPage.associationStream.listen((event) {
+        final GlobalKey key =
+            flow_map[event['tree_id']]!.nodeListWidget.nodeKeys[event['id']]!;
+        scrollToNode(key);
+        flow_map[event['tree_id']]!.nodeListWidget.selectNode(event['id']);
+        nodeListPage.nodeListWidget.deselectNode();
+      });
     }
     for (var exceptionFlowId in serializedData['exception_flows']) {
       var nodeListPage = NodeListPage(
@@ -75,6 +82,13 @@ class _MyHomePageState extends State<MyHomePage> {
       );
       exception_flows.add(nodeListPage);
       flow_map[exceptionFlowId] = nodeListPage;
+      nodeListPage.associationStream.listen((event) {
+        final GlobalKey key =
+            flow_map[event['tree_id']]!.nodeListWidget.nodeKeys[event['id']]!;
+        scrollToNode(key);
+        flow_map[event['tree_id']]!.nodeListWidget.selectNode(event['id']);
+        nodeListPage.nodeListWidget.deselectNode();
+      });
     }
 
     main_flow = NodeListPage(
@@ -84,10 +98,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
     flow_map[serializedData['main_flow']] = main_flow;
     main_flow.associationStream.listen((event) {
-      // var a = flow_map[event['tree_id']]!.nodeListWidget;
       final GlobalKey key =
           flow_map[event['tree_id']]!.nodeListWidget.nodeKeys[event['id']]!;
       scrollToNode(key);
+      flow_map[event['tree_id']]!.nodeListWidget.selectNode(event['id']);
+      main_flow.nodeListWidget.deselectNode();
     });
 
     setState(() {
