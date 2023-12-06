@@ -1,5 +1,12 @@
 import 'dart:convert';
 
+class AssociatedNode {
+  int id;
+  String url;
+
+  AssociatedNode(this.id, this.url);
+}
+
 class Flow {
   int id;
   String type; // MAIN, ALTERNATE, EXCEPTION
@@ -192,8 +199,8 @@ class Node {
   String text;
   // String type;
   Node? parent;
-  List<int> forwardNodeAssociations;
-  List<int> backwardNodeAssociations;
+  List<AssociatedNode> forwardNodeAssociations;
+  List<AssociatedNode> backwardNodeAssociations;
   List<Node> children;
   Tree? tree;
   String number;
@@ -273,13 +280,21 @@ List<Tree> parseTreesFromJson(String jsonString) {
 }
 
 Node parseNode(Map<String, dynamic> nodeJson, Node? parent, Tree? tree) {
+  List<AssociatedNode> associatedNodes = [];
+  List<AssociatedNode> backwardsAssociations = [];
+  for (var node in nodeJson['forward_associations']) {
+    associatedNodes.add(AssociatedNode(node['id'], node['url']));
+  }
+  for (var node in nodeJson['backward_associations']) {
+    backwardsAssociations.add(AssociatedNode(node['id'], node['url']));
+  }
   Node node = Node(
     id: nodeJson['id'],
     text: nodeJson['data'],
     // type: nodeJson['type'],
     parent: parent,
-    forwardNodeAssociations: List<int>.from(nodeJson['forward_associations']),
-    backwardNodeAssociations: List<int>.from(nodeJson['backward_associations']),
+    forwardNodeAssociations: associatedNodes,
+    backwardNodeAssociations: backwardsAssociations,
     children: [],
     tree: tree,
     order: nodeJson['order'] ?? 0,

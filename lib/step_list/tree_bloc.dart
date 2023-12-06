@@ -353,8 +353,8 @@ class NodeBloc extends Bloc<TreeEvent, NodeState> {
     }
   }
 
-  Future<http.Response> getTreeOfNode(int nodeId) async {
-    return await httpService.getTreeid(nodeId);
+  Future<http.Response> getTreeOfNode(int nodeId, String url) async {
+    return await httpService.getTreeid(nodeId, url);
   }
 
   // Future<List<Tree>> _fetchTrees() async {

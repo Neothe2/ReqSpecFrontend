@@ -67,8 +67,8 @@ class TreeHttpProvider {
         body: jsonEncode(orderMap));
   }
 
-  Future<http.Response> getTreeid(int nodeId) async {
-    return http.get(Uri.parse('${url + nodesRoute}/${nodeId}/'));
+  Future<http.Response> getTreeid(int nodeId, String nodesUrl) async {
+    return http.get(Uri.parse('${'$url/$nodesUrl'}/${nodeId}/get_tree_id/'));
   }
 }
 

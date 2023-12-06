@@ -41,16 +41,17 @@ class _MyHomePageState extends State<MyHomePage> {
   List<NodeListPage> exception_flows = [];
   late NodeListPage main_flow;
   dynamic use_case_description = {};
+  Map<int, NodeListPage> flow_map = {};
   bool treesFetched = false;
 
-  void scrollToNode(int nodeId) {
-    final GlobalKey key = exception_flows[0].nodeListWidget.nodeKeys[nodeId]!;
+  void scrollToNode(GlobalKey key) {
+    // final GlobalKey key = exception_flows[0].nodeListWidget.nodeKeys[nodeId]!;
 
     // Check if the context for the key is available
     if (key.currentContext != null) {
       // Scroll to the position of the key
       Scrollable.ensureVisible(key.currentContext!,
-          duration: Duration(milliseconds: 50000));
+          duration: Duration(milliseconds: 1000));
     }
   }
 
@@ -60,24 +61,33 @@ class _MyHomePageState extends State<MyHomePage> {
     var serializedData = jsonDecode(response.body);
     use_case_description = serializedData;
     for (var alternateFlowId in serializedData['alternate_flows']) {
-      alternate_flows.add(NodeListPage(
+      var nodeListPage = NodeListPage(
         treeId: alternateFlowId, // Replace with your first flowId
         httpProvider: AlternateFlowHttpProvidor(),
-      ));
+      );
+      alternate_flows.add(nodeListPage);
+      flow_map[alternateFlowId] = nodeListPage;
     }
     for (var exceptionFlowId in serializedData['exception_flows']) {
-      exception_flows.add(NodeListPage(
+      var nodeListPage = NodeListPage(
         treeId: exceptionFlowId, // Replace with your first flowId
         httpProvider: ExceptionFlowHttpProvidor(),
-      ));
+      );
+      exception_flows.add(nodeListPage);
+      flow_map[exceptionFlowId] = nodeListPage;
     }
 
     main_flow = NodeListPage(
       treeId: serializedData['main_flow'], // Replace with your first flowId
       httpProvider: StepHttpProvider(),
     );
+
+    flow_map[serializedData['main_flow']] = main_flow;
     main_flow.associationStream.listen((event) {
-      print(event);
+      // var a = flow_map[event['tree_id']]!.nodeListWidget;
+      final GlobalKey key =
+          flow_map[event['tree_id']]!.nodeListWidget.nodeKeys[event['id']]!;
+      scrollToNode(key);
     });
 
     setState(() {
@@ -104,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ? <Widget>[
                 TextButton(
                   onPressed: () {
-                    scrollToNode(32);
+                    print(flow_map[16]!.nodeListWidget);
                   },
                   child: Text('SCROOOOOL!!!'),
                   style: ButtonStyle(
