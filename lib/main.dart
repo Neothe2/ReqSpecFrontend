@@ -74,6 +74,9 @@ class _MyHomePageState extends State<MyHomePage> {
         flow_map[event['tree_id']]!.nodeListWidget.selectNode(event['id']);
         nodeListPage.nodeListWidget.deselectNode();
       });
+      nodeListPage.nodeClickStream.listen((event) {
+        print(event.text);
+      });
     }
     for (var exceptionFlowId in serializedData['exception_flows']) {
       var nodeListPage = NodeListPage(
@@ -89,6 +92,9 @@ class _MyHomePageState extends State<MyHomePage> {
         flow_map[event['tree_id']]!.nodeListWidget.selectNode(event['id']);
         nodeListPage.nodeListWidget.deselectNode();
       });
+      nodeListPage.nodeClickStream.listen((event) {
+        print(event.text);
+      });
     }
 
     main_flow = NodeListPage(
@@ -103,6 +109,10 @@ class _MyHomePageState extends State<MyHomePage> {
       scrollToNode(key);
       flow_map[event['tree_id']]!.nodeListWidget.selectNode(event['id']);
       main_flow.nodeListWidget.deselectNode();
+    });
+
+    main_flow.nodeClickStream.listen((event) {
+      print(event.text);
     });
 
     setState(() {

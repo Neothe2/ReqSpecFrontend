@@ -16,6 +16,10 @@ class NodeListPage extends StatelessWidget {
   late NodeListWidget nodeListWidget;
   final StreamController<Map<String, dynamic>> associationStreamController =
       StreamController<Map<String, dynamic>>();
+  final StreamController<Node> nodeClickStreamController =
+      StreamController<Node>.broadcast();
+
+  Stream<Node> get nodeClickStream => nodeClickStreamController.stream;
 
   NodeListPage({Key? key, required this.treeId, required this.httpProvider})
       : super(key: key);
@@ -24,13 +28,19 @@ class NodeListPage extends StatelessWidget {
   Stream<Map<String, dynamic>> get associationStream =>
       associationStreamController.stream;
 
+  final StreamController<Node> linkStreamController =
+      StreamController<Node>.broadcast();
+
+  Stream<Node> get linkStream => linkStreamController.stream;
+
   @override
   Widget build(BuildContext context) {
     // Pass the associationStreamController to NodeListWidget
     nodeListWidget = NodeListWidget(
-      treeId: treeId,
-      associationStreamController: associationStreamController,
-    );
+        treeId: treeId,
+        associationStreamController: associationStreamController,
+        nodeClickStreamController: nodeClickStreamController,
+        linkStreamController: linkStreamController);
 
     // No need to listen here, because the StreamController is passed down
     // and the parent can listen to it directly
@@ -44,6 +54,7 @@ class NodeListPage extends StatelessWidget {
   // Make sure to close the stream controller when the widget is disposed
   void dispose() {
     associationStreamController.close();
+    nodeClickStreamController.close();
   }
 }
 
@@ -56,12 +67,20 @@ class NodeListWidget extends StatelessWidget {
   Stream<Map<String, dynamic>> get associationStream =>
       associationStreamController.stream;
   late BuildContext context;
+  final StreamController<Node> nodeClickStreamController; // Add this line
+  Stream<Node> get nodeClickStream =>
+      nodeClickStreamController.stream; // And this line
+  final StreamController<Node> linkStreamController; // Add this line
+  Stream<Node> get linkClickStream =>
+      linkStreamController.stream; // And this line
 
   NodeListWidget({
     Key? key,
     required this.treeId,
     this.nodes,
     required this.associationStreamController,
+    required this.nodeClickStreamController,
+    required this.linkStreamController,
   }) : super(key: key);
 
   @override
@@ -123,6 +142,7 @@ class NodeListWidget extends StatelessWidget {
     return GestureDetector(
       key: nodeKeys[node.id],
       onTap: () {
+        nodeClickStreamController.add(node);
         if (isSelected) {
           context.read<NodeBloc>().add(DeselectNodeEvent()); // Deselect
         } else {
@@ -237,6 +257,21 @@ class NodeListWidget extends StatelessWidget {
                         }
                       },
                       child: Text('Linked from'),
+                      style: TextButton.styleFrom(
+                        primary: Colors.lightBlue, // Text Color
+                        backgroundColor:
+                            Colors.white, // Button background color
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.0), // Button padding
+                      ),
+                    ),
+                    SizedBox(width: 8), // Spacing between buttons
+                    TextButton(
+                      onPressed: () {
+                        // Emit the node object when the "Link" button is clicked
+                        linkStreamController.add(node);
+                      },
+                      child: Text('Link'),
                       style: TextButton.styleFrom(
                         primary: Colors.lightBlue, // Text Color
                         backgroundColor:
